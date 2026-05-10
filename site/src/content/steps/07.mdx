@@ -1,0 +1,33 @@
+---
+n: 7
+title: '@fzagent/cli'
+summary: Binario fzagent (commander) — agent, wiki, vector, config.
+phase: cli
+---
+
+```bash
+fzagent "Resuma raw/attention.pdf"          # one-shot
+fzagent --cli                               # interativo
+fzagent agent loop "<task>"                 # explicito
+fzagent agent budget "<task>" -i 30 --token-budget 200000
+fzagent agent skills | use cleaner '{"dryRun":true}'
+fzagent wiki ingest raw/karpathy.md --summarize
+fzagent wiki query "RAG hibrido" --synthesize
+fzagent wiki lint
+fzagent wiki stats
+fzagent vector validate
+fzagent vector recreate fzagent_kb
+fzagent config
+fzagent --version
+```
+
+## Factory unica
+
+`buildRuntime()` carrega config, monta os 5 providers (tolera credencial
+faltando), cria QdrantWrapper, EmbeddingsService, WikiIndexer, SkillRegistry,
+ToolRegistry, SessionStore. `buildAgent(runtime)` empacota tudo num Agent.
+
+## Mascaramento de secrets em `config`
+
+API keys aparecem como `***xxxx` (ultimos 4 chars). Logs estruturados
+nunca devem expor a credencial completa.

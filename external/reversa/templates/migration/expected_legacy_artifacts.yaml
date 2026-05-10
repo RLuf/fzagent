@@ -1,0 +1,77 @@
+# Lista declarativa de artefatos esperados em _reversa_sdd/ antes de iniciar a migração.
+# Atualizar esta lista é uma mudança de configuração; não exige reedição do agente reversa-migrate.
+#
+# Cada entrada:
+#   path: caminho relativo dentro de _reversa_sdd/
+#   kind: identificador lógico do artefato (informativo, não estritamente validado contra front-matter)
+#   required: true bloqueia o pipeline se ausente; false apenas loga aviso
+#   minSchemaVersion: versão mínima esperada de schemaVersion (informativo; ausência tolerada hoje)
+
+schemaVersion: 1
+artifacts:
+  - path: "code-analysis.md"
+    kind: code_analysis
+    required: true
+    minSchemaVersion: 1
+  - path: "domain.md"
+    kind: domain_model
+    required: true
+    minSchemaVersion: 1
+  - path: "architecture.md"
+    kind: architecture
+    required: true
+    minSchemaVersion: 1
+  - path: "dependencies.md"
+    kind: dependencies
+    required: true
+    minSchemaVersion: 1
+  - path: "inventory.md"
+    kind: legacy_inventory
+    required: true
+    minSchemaVersion: 1
+  - path: "data-dictionary.md"
+    kind: data_dictionary
+    required: false
+    minSchemaVersion: 1
+  - path: "state-machines.md"
+    kind: state_machines
+    required: false
+    minSchemaVersion: 1
+  - path: "permissions.md"
+    kind: permissions
+    required: false
+    minSchemaVersion: 1
+  - path: "gaps.md"
+    kind: gaps
+    required: true
+    minSchemaVersion: 1
+  - path: "questions.md"
+    kind: questions
+    required: false
+    minSchemaVersion: 1
+  - path: "confidence-report.md"
+    kind: confidence_report
+    required: true
+    minSchemaVersion: 1
+  - path: "traceability/code-spec-matrix.md"
+    kind: code_spec_matrix
+    required: false
+    minSchemaVersion: 1
+  - path: "sdd"
+    kind: sdd_dir
+    required: false
+    minSchemaVersion: 1
+
+# Aliases:
+# Nomes legados aceitos para compatibilidade com versões anteriores do time de descoberta.
+# Cada alias mapeia "nome esperado" → lista de nomes alternativos aceitos.
+aliases:
+  "domain.md":
+    - "domain_model.md"
+  "architecture.md":
+    - "architecture_legacy.md"
+  "code-analysis.md":
+    - "code_analysis.md"
+    - "process_flows.md"
+  "inventory.md":
+    - "legacy_inventory.md"

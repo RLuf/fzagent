@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body {
+  @apply bg-bg text-text font-sans antialiased;
+}
+
+a {
+  @apply text-accent hover:underline underline-offset-4;
+}
+
+pre {
+  @apply font-mono bg-surface border border-border rounded-lg p-4 overflow-x-auto;
+}
+
+code {
+  @apply font-mono text-sm;
+}
+
+.prose {
+  @apply max-w-3xl;
+}
+.prose h1 {
+  @apply text-3xl font-bold mt-10 mb-4 text-text;
+}
+.prose h2 {
+  @apply text-2xl font-semibold mt-10 mb-3 text-text border-b border-border pb-2;
+}
+.prose h3 {
+  @apply text-xl font-semibold mt-6 mb-2;
+}
+.prose p {
+  @apply leading-7 my-4 text-text/90;
+}
+.prose ul {
+  @apply list-disc ml-6 my-4;
+}
+.prose ol {
+  @apply list-decimal ml-6 my-4;
+}
+.prose code:not(pre code) {
+  @apply bg-surface text-accent px-1.5 py-0.5 rounded border border-border;
+}
+.prose blockquote {
+  @apply border-l-4 border-accent pl-4 italic text-muted my-4;
+}
+.prose table {
+  @apply my-4 border border-border;
+}
+.prose th,
+.prose td {
+  @apply border border-border p-2 text-sm;
+}
+.prose th {
+  @apply bg-surface font-semibold;
+}

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:build-your-own-openclaw.kiyo-n-zane.com)",
+      "Bash(curl -sL https://github.com/rogerluft/buildoc/archive/refs/heads/main.tar.gz -o buildoc.tar.gz)",
+      "Bash(tar -xzf buildoc.tar.gz)",
+      "Bash(curl -sL https://github.com/RLuf/reversa/archive/refs/heads/main.tar.gz -o reversa.tar.gz)",
+      "Bash(tar -xzf reversa.tar.gz)"
+    ]
+  },
+  "outputStyle": "Explanatory"
+}

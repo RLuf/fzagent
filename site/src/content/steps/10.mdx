@@ -1,0 +1,38 @@
+---
+n: 10
+title: CI & TDD enforcer
+summary: husky + lint-staged + GitHub Actions; commits bloqueiam se testes falharem.
+phase: ci
+---
+
+## Pre-commit (husky + lint-staged)
+
+`.husky/pre-commit` roda `lint-staged` — apenas nos arquivos staged:
+
+```json
+{
+  "*.{ts,tsx}": ["eslint --fix", "prettier --write"],
+  "*.{json,md,mdx,yaml,yml}": ["prettier --write"]
+}
+```
+
+## Pre-push (TDD enforcer)
+
+`.husky/pre-push` roda a suite de testes inteira. Falha = push bloqueado.
+Mesmo padrao do `fazai-ng`.
+
+## GitHub Actions
+
+`.github/workflows/ci.yml` em matrix Node 18, 20, 22:
+
+1. `npm ci`
+2. `npm run typecheck`
+3. `npm run lint`
+4. `npm run format:check`
+5. `npm test -- --coverage`
+6. Upload coverage para Codecov.
+
+## Coverage thresholds
+
+`vitest.config.ts` impoe: lines 70%, functions 70%, branches 60%,
+statements 70%. Build quebra se cair.

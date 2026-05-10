@@ -1,0 +1,38 @@
+{
+  "// description": "Base TS config compartilhada por todos os pacotes do monorepo. Decisoes:",
+  "// 1": "target ES2022 — Node 18+ suporta nativamente, evita transpile pesado.",
+  "// 2": "module/moduleResolution NodeNext — ESM puro com extensoes .js em imports relativos.",
+  "// 3": "strict + extras — pegar bugs em compile-time, alinhado com fazai-ng.",
+  "// 4": "declaration + sourceMap — facilita debug e tipos publicaveis.",
+  "// 5": "verbatimModuleSyntax — forca import type quando aplicavel; ajuda tree-shaking.",
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "lib": ["ES2022"],
+    "types": ["node"],
+
+    "strict": true,
+    "noImplicitOverride": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "useUnknownInCatchVariables": true,
+
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "inlineSources": true,
+
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "skipLibCheck": true,
+
+    "resolveJsonModule": true,
+    "incremental": true
+  },
+  "exclude": ["node_modules", "dist", ".tsup", "external", "external/**"]
+}

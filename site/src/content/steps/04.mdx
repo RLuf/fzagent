@@ -1,0 +1,49 @@
+---
+n: 4
+title: '@fzagent/memory'
+summary: Embeddings ONNX BGE-base 768d, Qdrant 6 collections, Wiki SQLite + FTS5, workflows Karpathy.
+phase: memory
+---
+
+O cerebro secundario hibrido. Quatro modulos:
+
+## 4a — Embeddings ONNX BGE-base
+
+WordPiece tokenizer proprio (~160 LOC) + onnxruntime-node + mean-pool +
+L2-normalize. Cache LRU 100k indexado por SHA-1 do texto sanitizado.
+Modelo (~440MB) baixado on-demand para `~/.cache/fzagent/models/`.
+
+### ascii-sanitizer fix v3.37
+
+Replicado fielmente:
+
+```ts
+text
+  .normalize('NFD') // decompoe acentos
+  .replace(/[̀-ͯ]/g, '') // remove diacriticos
+  .replace(/[^\x00-\x7f]/g, '') // remove non-ASCII
+  .replace(/\s+/g, ' ')
+  .trim();
+```
+
+A ordem importa: NFD primeiro para separar base do diacritico antes de
+remover.
+
+## 4b — Qdrant client
+
+Wrapper sobre `@qdrant/js-client-rest`. 6 collections constantes
+(`fzagent_kb`, `_memory`, `_learning`, `_personality`, `_inference`,
+`_semantic_cache`). Todas 768d Cosine. Threshold default **0.6**.
+`upsertPoint` valida dimensao — falha cedo previne corrupcao silenciosa.
+
+## 4c — Wiki indexer SQLite + FTS5
+
+Schema com `pages`, `tags`, `page_tags`, `links`, `sources`, `log` +
+`pages_fts USING fts5` mantida por triggers. Tokenizer FTS:
+`unicode61 remove_diacritics 2`.
+
+## 4d — Workflows Karpathy
+
+`ingest(rawPath)`, `query(q)`, `lint()`. Query e hibrida: FTS5 ⊕ Qdrant
+com merge por pageId, marca `source=hybrid` quando aparece em ambos.
+Sintese opcional via LLM com citacoes `[[slug]]`.

@@ -1,0 +1,29 @@
+{
+  "name": "@fzagent/providers",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Adapters multi-LLM (Anthropic, OpenAI, Google, OpenRouter, Ollama) com fallback router e circuit breaker",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc -b",
+    "clean": "rimraf dist .tsup tsconfig.tsbuildinfo"
+  },
+  "dependencies": {
+    "@fzagent/core": "*",
+    "openai": "^6.37.0"
+  }
+}

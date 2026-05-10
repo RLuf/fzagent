@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+# fzagent pre-push: TDD enforcer.
+# Bloqueia o push se a suite de testes falhar (mesmo padrao do fazai-ng).
+npm run typecheck && npm test

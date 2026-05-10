@@ -1,0 +1,45 @@
+---
+import Base from '../layouts/Base.astro';
+
+const packages = [
+  { name: '@fzagent/core', desc: 'tipos Zod, logger, config loader, event bus' },
+  { name: '@fzagent/providers', desc: 'multi-LLM com fallback, OAuth Anthropic, Gemini CLI, OpenRouter free' },
+  { name: '@fzagent/memory', desc: 'embeddings ONNX BGE-base, Qdrant, Wiki SQLite + FTS5' },
+  { name: '@fzagent/agent', desc: 'budget loop, state machine, circuit breaker, builtins, heartbeat' },
+  { name: '@fzagent/skills', desc: 'auto-discovery genaisrc/*.genai.mjs' },
+  { name: '@fzagent/cli', desc: 'binario fzagent (commander)' },
+];
+---
+
+<Base title="API reference">
+  <article class="prose">
+    <h1>API reference</h1>
+    <p>
+      Cada pacote do monorepo expoe uma superficie publica via barrel exports.
+      A documentacao completa e gerada via <code>tsc --declaration</code> e fica em
+      <code>packages/&lt;name&gt;/dist/index.d.ts</code>.
+    </p>
+
+    <h2>Pacotes</h2>
+    <table>
+      <thead>
+        <tr><th>Pacote</th><th>Descricao</th></tr>
+      </thead>
+      <tbody>
+        {packages.map((p) => (
+          <tr>
+            <td><code>{p.name}</code></td>
+            <td>{p.desc}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+
+    <h2>TODO</h2>
+    <p>
+      Geracao automatica de paginas por simbolo via <code>typedoc</code>
+      ou <code>api-extractor</code>. Por enquanto, leia os arquivos
+      <code>.d.ts</code> em <code>dist/</code> ou as fontes em <code>src/</code>.
+    </p>
+  </article>
+</Base>

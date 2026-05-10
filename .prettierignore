@@ -1,0 +1,10 @@
+node_modules
+dist
+.tsup
+coverage
+package-lock.json
+external
+wiki/cache
+db
+*.sqlite
+*.tsbuildinfo

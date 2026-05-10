@@ -1,0 +1,43 @@
+---
+n: 9
+title: 'skills-claude/'
+summary: SKILL.md para Claude.ai operar reversa e o cerebro secundario do fzagent.
+phase: claude
+---
+
+Skills no formato openclaw/reversa: arquivos `SKILL.md` com YAML frontmatter
+
+- corpo markdown contendo instrucoes operacionais para o agente do usuario
+  (Claude Code, Cursor, etc.).
+
+## Duas skills
+
+- **`skills-claude/reversa/`**: instala/orquestra o framework
+  [reversa](https://github.com/sandeco/reversa) em projetos legados.
+- **`skills-claude/fzagent/`**: opera o cerebro secundario deste workspace
+  (ingest, query, lint, geracao de Marp).
+
+## Anatomia de uma SKILL.md
+
+```markdown
+---
+name: fzagent
+description: Operador do cerebro secundario fzagent...
+license: MIT
+metadata:
+  framework: fzagent
+  role: orchestrator
+---
+
+Voce e o operador do fzagent. Quando ativado:
+
+1. Leia `.fzagent/state.json`
+2. Se phase==null → primeira execucao
+3. Se phase!=null → retomar
+   ...
+```
+
+## Por que markdown puro?
+
+Porque a "execucao" e feita pelo agente do usuario (Claude.ai, Codex).
+A skill fornece o **prompt operacional**, nao o codigo.

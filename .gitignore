@@ -1,0 +1,61 @@
+# dependencias
+node_modules/
+.npm/
+.pnpm-store/
+
+# builds
+dist/
+.tsup/
+*.tsbuildinfo
+coverage/
+.vitest-cache/
+
+# logs
+*.log
+logs/
+pnpm-debug.log*
+npm-debug.log*
+
+# config local
+.env
+.env.local
+.env.*.local
+fzagent.conf
+
+# bancos locais
+db/*.sqlite
+db/*.sqlite-journal
+db/*.sqlite-wal
+db/*.sqlite-shm
+
+# wiki gerado
+wiki/cache/
+wiki/index.sqlite
+
+# raw / cache
+raw/*
+!raw/.gitkeep
+
+# caches diversos
+.cache/
+.eslintcache
+.parcel-cache/
+
+# editores
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# externos clonados
+external/*/node_modules/
+external/*/.git/
+external/*/dist/
+
+# artefatos do agente
+.fzagent/
+_fzagent_artifacts/

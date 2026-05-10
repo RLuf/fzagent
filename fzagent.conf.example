@@ -1,0 +1,116 @@
+# =============================================================================
+# fzagent.conf.example
+# Configuracao operacional do superagente (estilo fazai.conf — k=v, comentarios #).
+# Copie para `fzagent.conf` para personalizar; valores aqui sao os defaults.
+# Credenciais (API keys) ficam em .env, NAO aqui.
+# =============================================================================
+
+# ---- Ordem de fallback de providers ----------------------------------------
+# Lista CSV. ProviderRouter tenta na ordem ate um responder com sucesso.
+# Valores: anthropic, ollama, openrouter, google, openai
+#
+# Default ajustado para:
+#   1. anthropic — assinatura Claude Code Max (OAuth via CLAUDE_CODE_OAUTH_TOKEN).
+#   2. ollama    — servidor local papaimach (modelos locais + cloud via proxy).
+#   3. openrouter— modelos free (sufixo `:free`) priorizados por listFreeModels().
+#   4. google    — Gemini via CLI subprocess (uso eventual).
+#   5. openai    — fallback final (custo mais alto).
+PROVIDER_FALLBACK_ORDER=anthropic,ollama,openrouter,google,openai
+
+# Modelos default por provider (referencia simbolica; o adapter resolve para o ID real)
+MODELS_ANTHROPIC=claude-sonnet-4-5,claude-haiku-4-5
+MODELS_OPENAI=gpt-4o,gpt-4o-mini
+MODELS_GOOGLE=gemini-2.5-pro,gemini-2.5-flash
+# OpenRouter: prioriza modelos com sufixo :free (custo zero, rate-limited)
+MODELS_OPENROUTER=qwen/qwen3-coder:free,meta-llama/llama-3.3-70b:free,google/gemini-2.0-flash-exp:free
+MODELS_OLLAMA=qwen3:14b,qwen3-coder:30b,phi3:medium,gemma3:12b,llama3.2:3b
+
+# Modelo default global (usado quando o usuario nao especifica)
+DEFAULT_MODEL=claude-sonnet-4-5
+
+# ---- Loop agentico ----------------------------------------------------------
+# Numero maximo de iteracoes do loop THINK->ACT->OBSERVE->REFLECT por tarefa.
+AGENTIC_MAX_ITERATIONS=20
+
+# Orcamento de tokens total por tarefa (input + output somados).
+AGENTIC_TOKEN_BUDGET=100000
+
+# Circuit breaker: numero de falhas consecutivas que pausam o agente.
+AGENTIC_CIRCUIT_BREAKER_MAX_FAILURES=3
+
+# Tempo (ms) que o agente espera antes de retomar apos circuit breaker abrir.
+AGENTIC_CIRCUIT_BREAKER_COOLDOWN_MS=30000
+
+# Heartbeat WORA: intervalo (ms) entre observacoes do estado do sistema.
+# 0 = desabilita.
+AGENTIC_HEARTBEAT_INTERVAL=30000
+
+# Tamanho do historico de turnos preservado em memoria por sessao.
+AGENTIC_HISTORY_TURNS=200
+
+# Compaction: percentual do orcamento de tokens em que dispara summarize.
+AGENTIC_COMPACTION_THRESHOLD_PCT=80
+
+# ---- Skill registry ---------------------------------------------------------
+# Diretorio escaneado para skills (relativo ao cwd do projeto).
+GENAISRC_DIR=genaisrc
+
+# Intervalo (ms) entre re-scans periodicos do GENAISRC_DIR.
+# 0 = scan apenas no startup.
+SKILL_REGISTRY_SCAN_INTERVAL=60000
+
+# Skills HIGH-permission exigem confirmacao do usuario antes de executar.
+SKILL_HIGH_PERMISSION_REQUIRES_CONFIRM=true
+
+# ---- Cerebro secundario (Wiki + Qdrant) ------------------------------------
+# Pasta raiz do wiki markdown (versionado em git).
+WIKI_DIR=wiki
+
+# Caminho do banco SQLite com FTS5 do wiki indexer.
+WIKI_DB=db/wiki.sqlite
+
+# Threshold de similaridade para retorno de busca semantica (0..1).
+RAG_SIMILARITY_THRESHOLD=0.6
+
+# Top-K por collection no contexto RAG.
+RAG_TOP_K=5
+
+# Collections Qdrant (todas dimensao 768, distancia Cosine — BGE-base padrao)
+QDRANT_COLLECTIONS=fzagent_kb,fzagent_memory,fzagent_learning,fzagent_personality,fzagent_inference,fzagent_semantic_cache
+
+# ---- Embeddings -------------------------------------------------------------
+# Modelo de embeddings (referencia simbolica — adapter resolve)
+EMBEDDINGS_MODEL=bge-base-en-v1.5
+# Dimensao (DEVE bater com QDRANT_COLLECTIONS criadas)
+EMBEDDINGS_DIM=768
+# Cache LRU de embeddings (numero de entradas)
+EMBEDDINGS_CACHE_SIZE=100000
+
+# ---- Web ---------------------------------------------------------------------
+# Search provider: brave | none
+WEB_SEARCH_PROVIDER=brave
+# Read provider: fetch (HTTP nativo + html2md) | none
+WEB_READ_PROVIDER=fetch
+# Timeout (ms) para fetch de paginas
+WEB_FETCH_TIMEOUT_MS=15000
+# Tamanho maximo do conteudo retornado (bytes)
+WEB_FETCH_MAX_BYTES=2000000
+
+# ---- Server (FASE 7+) -------------------------------------------------------
+# 0.0.0.0 ou 127.0.0.1 (mais seguro em testes locais)
+SERVER_HOST=127.0.0.1
+SERVER_PORT=7331
+# Habilita endpoint WebSocket /ws
+SERVER_WS_ENABLED=true
+
+# ---- Concorrencia -----------------------------------------------------------
+# Maximo de sessoes concorrentes por agent_id.
+MAX_CONCURRENCY_PER_AGENT=4
+
+# ---- Diretorios -------------------------------------------------------------
+# Onde os bancos SQLite ficam.
+DB_DIR=db
+# Onde fontes brutas para ingest sao colocadas.
+RAW_DIR=raw
+# Diretorio de skills locais para Claude.ai (FASE 9).
+SKILLS_CLAUDE_DIR=skills-claude

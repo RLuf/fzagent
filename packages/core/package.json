@@ -1,0 +1,30 @@
+{
+  "name": "@fzagent/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Tipos compartilhados (Zod), logger (pino), config loader e event bus do fzagent",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc -b",
+    "clean": "rimraf dist .tsup tsconfig.tsbuildinfo"
+  },
+  "dependencies": {
+    "pino": "^9.5.0",
+    "pino-pretty": "^11.3.0",
+    "zod": "^3.23.8"
+  }
+}

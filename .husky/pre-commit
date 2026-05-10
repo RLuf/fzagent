@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+# fzagent pre-commit: lint-staged em arquivos staged.
+npx lint-staged

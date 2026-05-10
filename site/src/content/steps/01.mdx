@@ -1,0 +1,26 @@
+---
+n: 1
+title: Workspace npm
+summary: Monorepo TypeScript ESM com 6 pacotes, ESLint flat, Prettier, Vitest, tsup.
+phase: foundations
+---
+
+Workspace npm com `packages/*` apontando para 6 pacotes (`core`, `providers`,
+`memory`, `skills`, `agent`, `cli`).
+
+## Stack base
+
+- **TypeScript 5.6** com `strict + noUncheckedIndexedAccess + exactOptionalPropertyTypes + verbatimModuleSyntax`.
+- **tsup** para bundling (ESM-only com `.d.ts`).
+- **vitest** para testes; **ESLint flat config v9**; **Prettier**.
+
+## tsconfig em duas camadas
+
+`tsconfig.json` raiz tem so `references` para `tsc -b`. Cada pacote tem o seu,
+e adicionalmente `tsconfig.build.json` (sem `composite`) usado pelo tsup —
+o gerador de `.d.ts` do tsup nao lida bem com referencias compostas.
+
+## Imports relativos com `.js`
+
+Padrao Node ESM. Force a disciplina cedo: ESLint tem regra
+`no-require-imports` ativa.

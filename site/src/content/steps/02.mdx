@@ -1,0 +1,36 @@
+---
+n: 2
+title: '@fzagent/core'
+summary: Tipos Zod, logger pino, config loader (.env + fzagent.conf), event bus tipado.
+phase: foundations
+---
+
+Pacote sem dependencia interna. Estabelece o **vocabulario** que todos os
+outros falam.
+
+## Tipos canonicos
+
+`Message`, `ToolCall`, `ToolResult`, `AgentState`, `AgentConfig`,
+`ProviderConfig`, `SkillManifest`, `WikiPage`, `IngestEvent`, `QueryEvent`.
+Todos como Zod schemas + tipos inferidos.
+
+## Logger pino
+
+`createLogger({ level, format, bindings })` — `format='silent'` em testes,
+`format='pretty'` em dev, `format='json'` em producao.
+
+## Config loader sem dotenv
+
+Parser proprio de k=v (`parseConfFile`). Precedencia clara:
+`process.env > .env > fzagent.conf > defaults`.
+
+## Event bus proprio (sem mitt)
+
+Mitt 3.0.1 tem incompatibilidade com `NodeNext + verbatimModuleSyntax`.
+Vendoramos uma versao tipada propria em ~80 linhas — zero dep, mais
+controle (handlers wildcard, isolamento de erros).
+
+## Erros com `code: FZ_*`
+
+`FzagentError` + 5 subclasses com `code: FZ_GENERIC | FZ_CONFIG | ...` —
+filtragem facil em logs sem `instanceof`.

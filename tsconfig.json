@@ -1,0 +1,12 @@
+{
+  "// description": "Root tsconfig — apenas referencia os pacotes para build composto via 'tsc -b'.",
+  "files": [],
+  "references": [
+    { "path": "packages/core" },
+    { "path": "packages/providers" },
+    { "path": "packages/memory" },
+    { "path": "packages/skills" },
+    { "path": "packages/agent" },
+    { "path": "packages/cli" }
+  ]
+}

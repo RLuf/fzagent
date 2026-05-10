@@ -1,0 +1,40 @@
+---
+n: 3
+title: '@fzagent/providers'
+summary: Multi-LLM com fallback, OAuth Anthropic via Claude Code, Gemini CLI, OpenRouter free.
+phase: providers
+---
+
+Interface unica `LLMProvider` + 5 adapters + `ProviderRouter` com fallback,
+retry exponencial e circuit breaker por provider.
+
+## Anthropic OAuth-first
+
+Replica o padrao do `fazai-ng/services/anthropic-auth.ts`:
+prioridade `CLAUDE_CODE_OAUTH_TOKEN > ANTHROPIC_OAUTH_TOKEN > ANTHROPIC_API_KEY`.
+Quando OAuth: `Authorization: Bearer` + headers de masquerade Claude Code CLI.
+Quando api_key: `x-api-key` padrao.
+
+## Google via Gemini CLI
+
+Subprocess do binario `gemini` local. Tool calls nao sao suportadas via CLI —
+documentado como TODO para adapter direto via API key futuro.
+
+## OpenRouter com free models
+
+`listFreeModels()` filtra modelos com sufixo `:free` — priorizar quando o
+orcamento esta apertado.
+
+## Ollama default papaimach
+
+`OLLAMA_BASE_URL=http://192.168.0.101:11434` — proxy local que aceita
+modelos cloud e locais.
+
+## Fallback order
+
+Default: `anthropic,ollama,openrouter,google,openai`.
+Anthropic primeiro pela assinatura Max; OpenAI por ultimo (custo mais alto).
+
+## Circuit breaker tres-estados
+
+`closed -> open (cooldown) -> half-open (uma chance) -> closed/open`.

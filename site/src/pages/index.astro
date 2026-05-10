@@ -1,0 +1,54 @@
+---
+import Base from '../layouts/Base.astro';
+
+const phases = [
+  { n: 0, slug: '00', title: 'Bootstrap & dossies', summary: 'Estudar fontes (openclaw, buildoc, reversa) e mapear a arquitetura.' },
+  { n: 1, slug: '01', title: 'Workspace npm', summary: 'Monorepo TypeScript ESM com 6 pacotes, eslint, prettier, vitest.' },
+  { n: 2, slug: '02', title: '@fzagent/core', summary: 'Tipos Zod, logger pino, config loader, event bus tipado.' },
+  { n: 3, slug: '03', title: '@fzagent/providers', summary: 'Multi-LLM com fallback, OAuth Anthropic, Gemini CLI, OpenRouter free.' },
+  { n: 4, slug: '04', title: '@fzagent/memory', summary: 'Embeddings ONNX BGE-base, Qdrant 6 collections, Wiki SQLite + FTS5.' },
+  { n: 5, slug: '05', title: '@fzagent/agent', summary: 'Budget loop, state machine, circuit breaker, 10 builtins, WORA heartbeat.' },
+  { n: 6, slug: '06', title: '@fzagent/skills', summary: 'Auto-discovery genaisrc/*.genai.mjs com permissoes proporcionais ao risco.' },
+  { n: 7, slug: '07', title: '@fzagent/cli', summary: 'Binario fzagent com commander: agent/wiki/vector/config.' },
+  { n: 8, slug: '08', title: 'site/', summary: 'Este site: Astro + Tailwind + MDX, dark theme, replica visual openclaw.' },
+  { n: 9, slug: '09', title: 'skills-claude/', summary: 'SKILL.md para Claude.ai operar reversa e o fzagent.' },
+  { n: 10, slug: '10', title: 'CI & TDD enforcer', summary: 'husky + lint-staged + GitHub Actions; commits bloqueiam se testes falharem.' },
+];
+---
+
+<Base title="fzagent — superagente OpenClaw-style">
+  <section class="text-center py-16 prose mx-auto">
+    <h1>fzagent</h1>
+    <p class="text-xl text-muted">
+      Construa um superagente <em>OpenClaw-style</em> em TypeScript ESM puro,
+      com cerebro secundario (Wiki SQLite + FTS5 + Qdrant), multi-provider LLM
+      com fallback, e budget loop com circuit breaker.
+    </p>
+    <p class="text-sm text-muted mt-4">
+      Inspirado em <a href="https://build-your-own-openclaw.kiyo-n-zane.com/">build-your-own-openclaw</a>
+      e no padrao <a href="https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f">LLM Wiki</a> de Karpathy.
+    </p>
+    <pre class="mt-8 text-left max-w-xl mx-auto"><code>$ npm install
+$ cp .env.example .env
+$ cp fzagent.conf.example fzagent.conf
+$ fzagent "Resuma o paper attention.pdf"</code></pre>
+  </section>
+
+  <section class="py-12">
+    <h2 class="text-2xl font-semibold mb-6 border-b border-border pb-2">11 capitulos progressivos</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {phases.map((p) => (
+        <a
+          href={`/steps/${p.slug}`}
+          class="block bg-surface border border-border rounded-lg p-5 hover:border-accent transition-colors no-underline"
+        >
+          <div class="flex items-baseline gap-3 mb-2">
+            <span class="font-mono text-accent">{String(p.n).padStart(2, '0')}</span>
+            <h3 class="font-semibold text-text">{p.title}</h3>
+          </div>
+          <p class="text-sm text-muted">{p.summary}</p>
+        </a>
+      ))}
+    </div>
+  </section>
+</Base>

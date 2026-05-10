@@ -1,0 +1,163 @@
+site_name: Reversa
+site_url: https://sandeco.github.io/reversa
+site_description: Transforme sistemas legados em especificações executáveis por agentes de IA.
+site_author: sandeco
+repo_url: https://github.com/sandeco/reversa
+repo_name: sandeco/reversa
+edit_uri: edit/main/docs/
+copyright: '"Reversa" by sandeco'
+
+theme:
+  name: material
+  language: pt-BR
+  palette:
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Mudar para modo claro
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Mudar para modo escuro
+  features:
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.tabs.link
+    - content.tooltips
+  icon:
+    repo: fontawesome/brands/github
+    logo: material/magnify
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+extra_css:
+  - stylesheets/extra.css
+
+plugins:
+  - search:
+      lang:
+        - pt
+        - en
+  - i18n:
+      docs_structure: suffix
+      languages:
+        - locale: en
+          default: true
+          name: English
+        - locale: pt
+          name: Português
+          build: true
+          nav_translations:
+            Home: Início
+            Why Reversa: Por que o Reversa
+            Installation: Instalação
+            How to use: Como usar
+            CLI: CLI
+            Configuration: Configuração
+            Supported engines: Engines suportadas
+            Analysis pipeline: Pipeline de análise
+            Confidence scale: Escala de confiança
+            Agents: Agentes
+            Overview: Visão geral
+            Guide with analogies: Guia com analogias
+            Reversa (Orchestrator): Reversa (Orquestrador)
+            Translators: Tradutores
+            N8N Translator: N8N Translator
+            Generated outputs: Saídas geradas
+            Developing from specs: Desenvolvendo com as specs
+            Migration: Migração
+            The 5 agents: Os 5 agentes
+            Paradigm shift: Mudança de paradigma
+            Strategies: Estratégias
+            Brief schema: Schema do brief
+            Contributing: Contribuindo
+        - locale: es
+          name: Español
+          build: true
+          nav_translations:
+            Home: Inicio
+            Why Reversa: Por qué Reversa
+            Installation: Instalación
+            How to use: Cómo usar
+            CLI: CLI
+            Configuration: Configuración
+            Supported engines: Motores compatibles
+            Analysis pipeline: Pipeline de análisis
+            Confidence scale: Escala de confianza
+            Agents: Agentes
+            Overview: Visión general
+            Guide with analogies: Guía con analogías
+            Reversa (Orchestrator): Reversa (Orquestador)
+            Translators: Traductores
+            N8N Translator: N8N Translator
+            Generated outputs: Salidas generadas
+            Developing from specs: Desarrollando con las specs
+            Migration: Migración
+            The 5 agents: Los 5 agentes
+            Paradigm shift: Cambio de paradigma
+            Strategies: Estrategias
+            Brief schema: Schema del brief
+            Contributing: Contribuir
+
+nav:
+  - Home: index.md
+  - Why Reversa: por-que-reversa.md
+  - Installation: instalacao.md
+  - How to use: uso.md
+  - CLI: cli.md
+  - Configuration: configuracao.md
+  - Supported engines: engines.md
+  - Analysis pipeline: pipeline.md
+  - Confidence scale: escala-confianca.md
+  - Agents:
+    - Overview: agentes/index.md
+    - Guide with analogies: agentes/agents-help.md
+    - Reversa (Orchestrator): agentes/reversa.md
+    - Scout: agentes/scout.md
+    - Archaeologist: agentes/arqueologo.md
+    - Detective: agentes/detetive.md
+    - Architect: agentes/arquiteto.md
+    - Writer: agentes/redator.md
+    - Reviewer: agentes/revisor.md
+    - Visor: agentes/visor.md
+    - Data Master: agentes/data-master.md
+    - Design System: agentes/design-system.md
+  - Translators:
+    - N8N Translator: agentes/n8n.md
+  - Generated outputs: saidas/index.md
+  - Developing from specs: desenvolvendo-com-specs.md
+  - Migration:
+    - Overview: migracao/index.md
+    - The 5 agents: migracao/agentes.md
+    - Paradigm shift: migracao/paradigma.md
+    - Strategies: migracao/estrategias.md
+    - Brief schema: migracao/brief.md
+  - Contributing: contribuindo.md

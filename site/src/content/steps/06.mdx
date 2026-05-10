@@ -1,0 +1,40 @@
+---
+n: 6
+title: '@fzagent/skills'
+summary: Auto-discovery genaisrc/*.genai.mjs com permissoes proporcionais ao risco.
+phase: skills
+---
+
+Skills sao codigos JavaScript com manifesto Zod. Diferentes de tools:
+**descobertas em runtime** lendo `genaisrc/*.genai.mjs` no startup
+(e periodicamente quando `watch=true`).
+
+## Manifesto
+
+```ts
+export default defineSkill({
+  name: 'minha-skill',
+  description: '...',
+  triggers: ['ativar via ...'],
+  inputSchema: z.object({ ... }),
+  permissions: 'low' | 'medium' | 'high',
+  category: 'system' | 'agent' | 'wiki' | 'web' | 'code' | 'memory' | 'custom',
+  async run(ctx, input) { ... },
+});
+```
+
+## 6 skills built-in
+
+`cleaner` (HIGH), `reflect` (LOW), `web-research` (LOW),
+`wiki-ingest` (MEDIUM), `wiki-query` (LOW), `code-review` (LOW).
+
+## Permissoes proporcionais ao risco
+
+Skills HIGH exigem confirmacao do caller via `onHighConfirm` callback —
+o registry nao bloqueia se voce nao forneceu callback (assume que voce
+aceitou o risco).
+
+## Hot reload via chokidar
+
+Quando `watch=true`, mudancas em `genaisrc/*.genai.mjs` recarregam a
+skill automaticamente (cache-bust por hash).

@@ -1,0 +1,31 @@
+---
+n: 0
+title: Bootstrap & dossies
+summary: Estudar openclaw + buildoc + reversa e mapear a arquitetura para o fzagent.
+phase: foundations
+---
+
+A FASE 0 nao escreve codigo — escreve **entendimento**. Antes de transcrever
+o openclaw para TypeScript, precisamos saber:
+
+- O que cada um dos 18 capitulos do build-your-own-openclaw acrescenta;
+- Como o `buildoc` (implementacao Python de referencia) organiza os snapshots;
+- O que o `reversa` ensina sobre skills markdown puro vs subprocess.
+
+## Tres dossies
+
+Geramos `wiki/sources/openclaw.md`, `wiki/sources/buildoc.md` e
+`wiki/sources/reversa.md` — cada um com a versao **simplificada** que vamos
+implementar no fzagent.
+
+## Decisoes-chave
+
+- TypeScript estrito + ESM puro alinhado a `fazai-ng`.
+- Hibrido textual (FTS5) + vetorial (Qdrant) para o cerebro secundario.
+- Permissoes proporcionais ao risco em vez de "tudo aberto".
+- Circuit breaker em ambos os niveis (provider e agent).
+
+## Por que esta fase importa
+
+Sem dossies, qualquer capitulo seguinte vira **transcrição literal** —
+exatamente o que queremos evitar. O dossie deixa explicito **o que NAO copiar**.

@@ -1,0 +1,66 @@
+---
+n: 5
+title: '@fzagent/agent'
+summary: Budget loop, state machine THINK->ACT->OBSERVE->REFLECT, circuit breaker, 10 builtins, WORA heartbeat.
+phase: core
+---
+
+O coracao do fzagent. Replica a essencia do openclaw em ~300 linhas
+(arquivo principal `agent.ts`).
+
+## Budget loop
+
+```ts
+while (true) {
+  if (cb.tripped()) return 'circuit-breaker';
+  if (signal.aborted) return 'aborted';
+  if (iter >= maxIterations) return 'budget:max-iter';
+  if (tokens >= tokenBudget) return 'budget:tokens';
+
+  // THINK
+  const r = await router.complete(messages, { systemPrompt, tools });
+
+  // ACT: se nao tem tool calls, end_turn
+  if (r.toolCalls.length === 0) return 'end_turn';
+
+  // OBSERVE: executa cada tool e anexa resultado ao historico
+  for (const tc of r.toolCalls) {
+    const out = await tools.execute(tc.name, tc.input, ctx);
+    messages.push({ role: 'tool', content: out, tool_call_id: tc.id });
+  }
+  // REFLECT: implicito — proxima iteracao com historico atualizado
+}
+```
+
+## 10 tools nativas
+
+`shell.exec` (HIGH), `fs.read` (LOW), `fs.write` (MEDIUM),
+`web.fetch` (LOW), `web.search` (LOW, Brave),
+`wiki.ingest` (MEDIUM), `wiki.query` (LOW), `wiki.lint` (LOW),
+`skill.invoke` (MEDIUM), `agent.delegate` (MEDIUM).
+
+## ToolRegistry
+
+`register(tool)`, `execute(name, input, ctx)`. Validacao via Zod.
+Conversor proprio Zod -> JSON Schema (~80 LOC) — zero dep extra.
+
+## Session persistence (SQLite)
+
+`sessions(id, agent_id, source, task, started_at, ended_at, status)` +
+`turns(id, session_id, role, content_json, tokens_in, tokens_out, ts)` +
+`tool_calls(id, turn_id, tool_call_id, name, input_json, output_json,
+duration_ms, ok, ts)`.
+
+## WORA heartbeat (zero-LLM)
+
+A cada 30s observa heap/qdrant/disco e age por heuristica (gc, reconnect,
+alert). Custo desprezivel; pode ser desabilitado.
+
+## Streaming via async iterator
+
+```ts
+for await (const ev of agent.run({ task })) {
+  // ev: { type: 'iteration' | 'thinking' | 'assistant' | 'tool-call'
+  //     | 'tool-result' | 'budget-exceeded' | 'end' | ... }
+}
+```

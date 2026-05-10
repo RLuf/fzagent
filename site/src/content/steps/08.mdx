@@ -1,0 +1,44 @@
+---
+n: 8
+title: 'site/'
+summary: Astro + Tailwind + MDX, dark theme, replica visual openclaw.
+phase: docs
+---
+
+Voce esta lendo este capitulo no site da FASE 8. :)
+
+## Stack
+
+- **Astro 4** com integration `@astrojs/mdx` para conteudo + `@astrojs/tailwind`.
+- **Tailwind 3** com paleta dark (bg `#0b0d10`, surface `#14171c`, accent `#7c3aed`).
+- Conteudo em `src/content/steps/*.mdx` — collection tipada via `astro:content`.
+
+## Estrutura
+
+```
+site/
+├── astro.config.mjs
+├── tailwind.config.mjs
+├── src/
+│   ├── layouts/Base.astro
+│   ├── pages/
+│   │   ├── index.astro
+│   │   ├── steps/[slug].astro
+│   │   ├── api.astro
+│   │   └── blog.astro
+│   ├── content/
+│   │   ├── config.ts
+│   │   └── steps/00.mdx ... 10.mdx
+│   └── styles/global.css
+└── tsconfig.json
+```
+
+## Comandos
+
+```bash
+cd site
+npm install
+npm run dev      # dev server em :4321
+npm run build    # static site em dist/
+npm run preview  # serve dist/
+```

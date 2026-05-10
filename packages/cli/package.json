@@ -1,0 +1,37 @@
+{
+  "name": "@fzagent/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Binario fzagent: one-shot, --cli interativo, agent loop/budget/skills, wiki ingest/query/lint, vector validate/recreate",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "bin": {
+    "fzagent": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc -b",
+    "clean": "rimraf dist .tsup tsconfig.tsbuildinfo"
+  },
+  "dependencies": {
+    "@fzagent/agent": "*",
+    "@fzagent/core": "*",
+    "@fzagent/memory": "*",
+    "@fzagent/providers": "*",
+    "@fzagent/skills": "*",
+    "commander": "^12.1.0",
+    "picocolors": "^1.1.1"
+  }
+}

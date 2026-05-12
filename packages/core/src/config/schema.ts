@@ -31,7 +31,9 @@ const boolStr = (defaultValue: boolean) =>
 
 // fzagent.conf — toda config operacional nao-secreta.
 export const FzagentConfSchema = z.object({
-  PROVIDER_FALLBACK_ORDER: csvList('anthropic,openai,google,openrouter,ollama'),
+  // OpenRouter deprecated do default (free tier 429 rate-limit hostil).
+  // Adapter mantido — re-incluir manualmente neste CSV para reativar.
+  PROVIDER_FALLBACK_ORDER: csvList('anthropic,google,ollama,openai'),
 
   MODELS_ANTHROPIC: csvList('claude-sonnet-4-5,claude-haiku-4-5'),
   MODELS_OPENAI: csvList('gpt-4o,gpt-4o-mini'),
@@ -42,7 +44,7 @@ export const FzagentConfSchema = z.object({
   DEFAULT_MODEL: z.string().default('claude-sonnet-4-5'),
 
   AGENTIC_MAX_ITERATIONS: intStr(20),
-  AGENTIC_TOKEN_BUDGET: intStr(100000),
+  AGENTIC_TOKEN_BUDGET: intStr(200000),
   AGENTIC_CIRCUIT_BREAKER_MAX_FAILURES: intStr(3),
   AGENTIC_CIRCUIT_BREAKER_COOLDOWN_MS: intStr(30000),
   AGENTIC_HEARTBEAT_INTERVAL: intStr(30000),

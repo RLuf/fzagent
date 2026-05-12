@@ -15,6 +15,7 @@ import { ProviderError } from '@fzagent/core';
 
 import { BaseLLMProvider, type BaseProviderOptions } from '../base.js';
 import { getAnthropicAuth } from '../credentials.js';
+import { buildToolNameMap, denormalizeToolName, sanitizeToolName } from '../utils/tool-names.js';
 import type {
   CompleteOptions,
   CompleteResult,
@@ -120,6 +121,8 @@ export class AnthropicProvider extends BaseLLMProvider {
   async complete(messages: Message[], options: CompleteOptions): Promise<CompleteResult> {
     const start = Date.now();
     const { headers, body } = this.buildRequest(messages, options, false);
+    // Map sanitized -> original para denormalizar names retornados pela API.
+    const nameMap = buildToolNameMap(options.tools);
 
     const reqInit: RequestInit & { timeoutMs?: number } = {
       method: 'POST',
@@ -150,7 +153,7 @@ export class AnthropicProvider extends BaseLLMProvider {
       else if (block.type === 'tool_use') {
         toolCalls.push({
           id: block.id,
-          name: block.name,
+          name: denormalizeToolName(block.name, nameMap),
           input: block.input ?? {},
         });
       }
@@ -187,6 +190,7 @@ export class AnthropicProvider extends BaseLLMProvider {
 
   async *stream(messages: Message[], options: CompleteOptions): AsyncIterable<StreamChunk> {
     const { headers, body } = this.buildRequest(messages, options, true);
+    const nameMap = buildToolNameMap(options.tools);
 
     const reqInit: RequestInit & { timeoutMs?: number } = {
       method: 'POST',
@@ -218,8 +222,9 @@ export class AnthropicProvider extends BaseLLMProvider {
         const cb = data['content_block'] as { type: string; id?: string; name?: string };
         const idx = data['index'] as number;
         if (cb.type === 'tool_use' && cb.id && cb.name) {
-          toolAcc.set(idx, { id: cb.id, name: cb.name, json: '' });
-          yield { type: 'tool-call-start', toolCallId: cb.id, toolName: cb.name };
+          const canonicalName = denormalizeToolName(cb.name, nameMap);
+          toolAcc.set(idx, { id: cb.id, name: canonicalName, json: '' });
+          yield { type: 'tool-call-start', toolCallId: cb.id, toolName: canonicalName };
         }
       } else if (t === 'content_block_delta') {
         const delta = data['delta'] as { type: string; text?: string; partial_json?: string };
@@ -382,7 +387,14 @@ export function messagesToAnthropic(
       const blocks: AnthBlock[] = [];
       if (msg.content.length > 0) blocks.push({ type: 'text', text: msg.content });
       for (const tc of msg.tool_calls) {
-        blocks.push({ type: 'tool_use', id: tc.id, name: tc.name, input: tc.input });
+        // Mesma sanitizacao do toolToAnthropic — historico vai pra API com
+        // wire-name. Quando o agent loop continua, denormalizamos de volta.
+        blocks.push({
+          type: 'tool_use',
+          id: tc.id,
+          name: sanitizeToolName(tc.name),
+          input: tc.input,
+        });
       }
       out.push({ role: 'assistant', content: blocks });
     } else {
@@ -397,8 +409,10 @@ export function messagesToAnthropic(
 }
 
 export function toolToAnthropic(tool: ToolDefinition): AnthTool {
+  // Sanitiza nome para casar regex da API (^[a-zA-Z0-9_-]{1,128}$).
+  // Tools canonicas do fzagent usam dot-namespace (shell.exec); Anthropic rejeita.
   return {
-    name: tool.name,
+    name: sanitizeToolName(tool.name),
     description: tool.description,
     input_schema: tool.inputSchema,
   };

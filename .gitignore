@@ -60,5 +60,12 @@ external/*/dist/
 .fzagent/
 _fzagent_artifacts/
 
+# Outputs gerados pelo agente em testes (pong, enduro, etc.).
+# Promover para examples/ via PR dedicado quando valer preservar.
+pong/
+enduro/
+minhoquinha_game.py
+*.genai-output/
+
 # Claude Code worktrees temporarias
 .claude/worktrees/

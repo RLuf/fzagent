@@ -22,6 +22,7 @@ import type {
   ToolChoice,
   ToolDefinition,
 } from '../types.js';
+import { buildToolNameMap, denormalizeToolName, sanitizeToolName } from '../utils/tool-names.js';
 
 const DEFAULT_OPENAI_MODELS: readonly string[] = ['gpt-4o', 'gpt-4o-mini'];
 
@@ -35,6 +36,8 @@ export abstract class OpenAIProtocolProvider extends BaseLLMProvider {
   async complete(messages: Message[], options: CompleteOptions): Promise<CompleteResult> {
     const oaiMessages = messagesToOpenAI(messages, options.systemPrompt);
     const tools = options.tools?.map(toolToOpenAI);
+    // Map sanitized -> original para denormalizar names retornados pela API.
+    const nameMap = buildToolNameMap(options.tools);
     const start = Date.now();
 
     const params: OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming = {
@@ -68,7 +71,11 @@ export abstract class OpenAIProtocolProvider extends BaseLLMProvider {
         } catch {
           input = { _raw: tc.function.arguments };
         }
-        toolCalls.push({ id: tc.id, name: tc.function.name, input });
+        toolCalls.push({
+          id: tc.id,
+          name: denormalizeToolName(tc.function.name, nameMap),
+          input,
+        });
       }
     }
 
@@ -98,6 +105,7 @@ export abstract class OpenAIProtocolProvider extends BaseLLMProvider {
   async *stream(messages: Message[], options: CompleteOptions): AsyncIterable<StreamChunk> {
     const oaiMessages = messagesToOpenAI(messages, options.systemPrompt);
     const tools = options.tools?.map(toolToOpenAI);
+    const nameMap = buildToolNameMap(options.tools);
 
     const params: OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming = {
       model: options.model,
@@ -135,7 +143,11 @@ export abstract class OpenAIProtocolProvider extends BaseLLMProvider {
             started: false,
           };
           if (tcDelta.id !== undefined) acc.id = tcDelta.id;
-          if (tcDelta.function?.name !== undefined) acc.name = tcDelta.function.name;
+          if (tcDelta.function?.name !== undefined) {
+            // Denormaliza nome (shell_exec -> shell.exec) imediatamente para
+            // que tool-call-start ja saia com nome canonico.
+            acc.name = denormalizeToolName(tcDelta.function.name, nameMap);
+          }
           if (!acc.started && acc.id && acc.name) {
             acc.started = true;
             yield { type: 'tool-call-start', toolCallId: acc.id, toolName: acc.name };
@@ -235,7 +247,10 @@ export function messagesToOpenAI(
         tool_calls: msg.tool_calls.map((tc) => ({
           id: tc.id,
           type: 'function' as const,
-          function: { name: tc.name, arguments: JSON.stringify(tc.input) },
+          // OpenAI/OpenRouter exigem regex ^[a-zA-Z0-9_-]{1,64}$ no name.
+          // Sanitiza historico outbound; ToolCall em CompleteResult ja sai
+          // denormalizado (via denormalizeToolName em complete()/stream()).
+          function: { name: sanitizeToolName(tc.name), arguments: JSON.stringify(tc.input) },
         })),
       });
     } else {
@@ -249,7 +264,8 @@ export function toolToOpenAI(tool: ToolDefinition): OpenAI.Chat.Completions.Chat
   return {
     type: 'function',
     function: {
-      name: tool.name,
+      // Sanitiza nome para casar regex da API (^[a-zA-Z0-9_-]{1,64}$).
+      name: sanitizeToolName(tool.name),
       description: tool.description,
       parameters: tool.inputSchema as Record<string, unknown>,
     },

@@ -7,15 +7,17 @@
 
 # ---- Ordem de fallback de providers ----------------------------------------
 # Lista CSV. ProviderRouter tenta na ordem ate um responder com sucesso.
-# Valores: anthropic, ollama, openrouter, google, openai
+# Valores aceitos: anthropic, ollama, google, openai, openrouter (deprecated)
 #
 # Default ajustado para:
 #   1. anthropic — assinatura Claude Code Max (OAuth via CLAUDE_CODE_OAUTH_TOKEN).
-#   2. ollama    — servidor local papaimach (modelos locais + cloud via proxy).
-#   3. openrouter— modelos free (sufixo `:free`) priorizados por listFreeModels().
-#   4. google    — Gemini via CLI subprocess (uso eventual).
-#   5. openai    — fallback final (custo mais alto).
-PROVIDER_FALLBACK_ORDER=anthropic,ollama,openrouter,google,openai
+#   2. google    — Gemini (CLI hoje; via Worker proxy OpenAI-compat planejado).
+#   3. ollama    — servidor local papaimach (modelos locais).
+#   4. openai    — fallback final (custo).
+#
+# OpenRouter REMOVIDO do default — free tier rate-limit hostil (429 frequente).
+# Para reativar manualmente, inclua `openrouter` no CSV abaixo.
+PROVIDER_FALLBACK_ORDER=anthropic,google,ollama,openai
 
 # Modelos default por provider (referencia simbolica; o adapter resolve para o ID real)
 MODELS_ANTHROPIC=claude-sonnet-4-5,claude-haiku-4-5
@@ -33,7 +35,9 @@ DEFAULT_MODEL=claude-sonnet-4-5
 AGENTIC_MAX_ITERATIONS=20
 
 # Orcamento de tokens total por tarefa (input + output somados).
-AGENTIC_TOKEN_BUDGET=100000
+# Subido para 200k apos observacao: tarefas reais com error-recovery (encoding,
+# python2-vs-3, qdrant offline) consomem ~150k. 100k esgotava em 15 iters.
+AGENTIC_TOKEN_BUDGET=200000
 
 # Circuit breaker: numero de falhas consecutivas que pausam o agente.
 AGENTIC_CIRCUIT_BREAKER_MAX_FAILURES=3

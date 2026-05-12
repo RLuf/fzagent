@@ -47,6 +47,23 @@ export interface AssembleInput {
 
 const DEFAULT_SAFETY = `Voce nunca expoe credenciais. Voce nao executa comandos destrutivos sem confirmacao explicita do usuario. Quando estiver inseguro, peca esclarecimento.`;
 
+const DEFAULT_BOOTSTRAP = `## Politica de encoding e ambiente
+
+REGRA ABSOLUTA: codigo gerado, comentarios, prints, mensagens e nomes de arquivo devem usar APENAS ASCII. Sem acentos, sem caracteres especiais. Isso elimina classe inteira de bugs de encoding e mantem compatibilidade entre interpreters.
+
+Em Python especificamente: como nao havera caracteres nao-ASCII, o encoding header (# -*- coding: utf-8 -*-) NAO eh necessario. Nao adicione.
+
+## Ambiente alvo: Linux (Ubuntu/Debian/pop_OS)
+
+Sempre invoque python como \`python3\` explicito; NUNCA \`python\` (em muitos sistemas /usr/bin/python aponta para Python 2 ou nao existe).
+
+Antes de invocar scripts com dependencias, verifique:
+1. \`which python3\` para confirmar existencia
+2. \`python3 -m pip --version\` para confirmar pip disponivel
+3. Se pip ausente: instrua \`python3 -m ensurepip --upgrade\` ou \`sudo apt install python3-pip\` em vez de assumir
+
+Para instalar dependencias de scripts Python ad-hoc gerados pelo proprio agente: prefira venv local ao workspace (\`python3 -m venv .venv && .venv/bin/pip install ...\`) ao inves de instalar global. Evita conflito com pacotes do sistema.`;
+
 export async function assembleSystemPrompt(input: AssembleInput): Promise<string> {
   const parts: string[] = [];
 
@@ -61,10 +78,8 @@ export async function assembleSystemPrompt(input: AssembleInput): Promise<string
   // 3. Safety
   parts.push(`# Safety\n${input.safety ?? DEFAULT_SAFETY}`);
 
-  // 4. Bootstrap (opcional, ex: estrutura do workspace)
-  if (input.bootstrap) {
-    parts.push(`# Bootstrap\n${input.bootstrap}`);
-  }
+  // 4. Bootstrap (sempre presente — engloba politicas ambientais default)
+  parts.push(`# Bootstrap\n${input.bootstrap ?? DEFAULT_BOOTSTRAP}`);
 
   // Tools disponiveis (parte de Bootstrap)
   const toolsList = input.tools

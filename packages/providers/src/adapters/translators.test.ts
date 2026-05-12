@@ -71,13 +71,14 @@ describe('Anthropic translators', () => {
     }
   });
 
-  it('toolToAnthropic preserves shape', () => {
+  it('toolToAnthropic preserves shape and sanitizes name (dot -> underscore)', () => {
     const t = toolToAnthropic({
       name: 'web.fetch',
       description: 'fetch URL',
       inputSchema: { type: 'object', properties: { url: { type: 'string' } } },
     });
-    expect(t.name).toBe('web.fetch');
+    // Anthropic exige regex ^[a-zA-Z0-9_-]{1,128}$ — dot eh sanitizado on-wire.
+    expect(t.name).toBe('web_fetch');
     expect(t.input_schema.type).toBe('object');
   });
 
@@ -124,14 +125,15 @@ describe('OpenAI translators', () => {
     }
   });
 
-  it('toolToOpenAI wraps in function envelope', () => {
+  it('toolToOpenAI wraps in function envelope and sanitizes name', () => {
     const t = toolToOpenAI({
       name: 'web.fetch',
       description: 'fetch URL',
       inputSchema: { type: 'object' },
     });
     expect(t.type).toBe('function');
-    expect(t.function.name).toBe('web.fetch');
+    // OpenAI exige regex ^[a-zA-Z0-9_-]{1,64}$ — dot eh sanitizado on-wire.
+    expect(t.function.name).toBe('web_fetch');
   });
 
   it('toolChoiceToOpenAI maps each variant', () => {

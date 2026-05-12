@@ -20,14 +20,10 @@ afterEach(() => {
 describe('loadConfig', () => {
   it('returns defaults when no files and clean env', () => {
     const { conf, env } = loadConfig({ cwd: dir, env: {} });
-    expect(conf.PROVIDER_FALLBACK_ORDER).toEqual([
-      'anthropic',
-      'openai',
-      'google',
-      'openrouter',
-      'ollama',
-    ]);
+    // OpenRouter removido do default em 2026-05-12 (free tier 429 hostil).
+    expect(conf.PROVIDER_FALLBACK_ORDER).toEqual(['anthropic', 'google', 'ollama', 'openai']);
     expect(conf.AGENTIC_MAX_ITERATIONS).toBe(20);
+    expect(conf.AGENTIC_TOKEN_BUDGET).toBe(200000);
     expect(conf.EMBEDDINGS_DIM).toBe(768);
     expect(env.OLLAMA_BASE_URL).toBe('http://192.168.0.101:11434');
     // LOG_LEVEL agora vive no fzagent.conf (override via env opcional).

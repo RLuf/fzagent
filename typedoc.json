@@ -1,0 +1,27 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": [
+    "packages/core/src/index.ts",
+    "packages/providers/src/index.ts",
+    "packages/memory/src/index.ts",
+    "packages/agent/src/index.ts",
+    "packages/skills/src/index.ts",
+    "packages/cli/src/index.ts"
+  ],
+  "out": "docs/api-reference",
+  "plugin": ["typedoc-plugin-markdown"],
+  "readme": "none",
+  "exclude": ["**/*.test.ts", "**/dist/**", "**/node_modules/**", "**/.tsup/**", "**/.claude/**"],
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "excludeExternals": true,
+  "skipErrorChecking": false,
+  "githubPages": false,
+  "hideGenerator": true,
+  "disableSources": false,
+  "name": "fzagent API Reference",
+  "navigation": {
+    "includeCategories": false,
+    "includeGroups": false
+  }
+}

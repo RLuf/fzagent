@@ -71,25 +71,26 @@ export async function buildRuntime(opts: BuildOptions = {}): Promise<FzagentRunt
   const eventBus = createEventBus();
 
   // Provider construction com tolerancia a credencial faltando.
+  // Provider pulado eh logado em WARN (nao DEBUG) para evitar o anti-pattern
+  // "falha silenciosa de configuracao" — antes era invisivel em LOG_LEVEL=info.
   const providers: LLMProvider[] = [];
+  const skipped: Array<{ provider: string; reason: string }> = [];
   const cfg = (name: 'anthropic' | 'openai' | 'openrouter' | 'google' | 'ollama') => ({
     name,
     models: [] as string[],
   });
-  const tryAdd = (factory: () => LLMProvider): void => {
+  const tryAdd = (name: string, factory: () => LLMProvider): void => {
     try {
       providers.push(factory());
     } catch (err) {
-      if (!opts.silent) {
-        logger.debug(
-          { error: err instanceof Error ? err.message : String(err) },
-          'provider not available — skipping',
-        );
-      }
+      const reason = err instanceof Error ? err.message : String(err);
+      skipped.push({ provider: name, reason });
+      logger.warn({ provider: name, reason }, 'Provider unavailable — skipped');
     }
   };
 
   tryAdd(
+    'anthropic',
     () =>
       new AnthropicProvider({
         config: { ...cfg('anthropic'), models: conf.MODELS_ANTHROPIC },
@@ -98,6 +99,7 @@ export async function buildRuntime(opts: BuildOptions = {}): Promise<FzagentRunt
       }),
   );
   tryAdd(
+    'openai',
     () =>
       new OpenAIProvider({
         config: { ...cfg('openai'), apiKey: env.OPENAI_API_KEY ?? '', models: conf.MODELS_OPENAI },
@@ -105,6 +107,7 @@ export async function buildRuntime(opts: BuildOptions = {}): Promise<FzagentRunt
       }),
   );
   tryAdd(
+    'openrouter',
     () =>
       new OpenRouterProvider({
         config: {
@@ -118,6 +121,7 @@ export async function buildRuntime(opts: BuildOptions = {}): Promise<FzagentRunt
       }),
   );
   tryAdd(
+    'google',
     () =>
       new GoogleProvider({
         config: { ...cfg('google'), models: conf.MODELS_GOOGLE },
@@ -126,11 +130,24 @@ export async function buildRuntime(opts: BuildOptions = {}): Promise<FzagentRunt
       }),
   );
   tryAdd(
+    'ollama',
     () =>
       new OllamaProvider({
         config: { ...cfg('ollama'), baseUrl: env.OLLAMA_BASE_URL, models: conf.MODELS_OLLAMA },
         logger,
       }),
+  );
+
+  // Resumo da inicializacao — ajuda diagnostico forense rapido.
+  // INFO em vez de DEBUG: aparece com LOG_LEVEL=info (default), nao precisa
+  // ativar verbose para descobrir que provider esta faltando.
+  logger.info(
+    {
+      available: providers.map((p) => p.name),
+      skipped: skipped.map((s) => s.provider),
+      total: providers.length,
+    },
+    `Providers initialized: ${providers.length} available, ${skipped.length} skipped`,
   );
 
   const router = new ProviderRouter({

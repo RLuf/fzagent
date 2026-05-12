@@ -52,6 +52,11 @@ export const FzagentConfSchema = z.object({
   GENAISRC_DIR: z.string().default('genaisrc'),
   SKILL_REGISTRY_SCAN_INTERVAL: intStr(60000),
   SKILL_HIGH_PERMISSION_REQUIRES_CONFIRM: boolStr(true),
+  TOOL_HIGH_PERMISSION_REQUIRES_CONFIRM: boolStr(true),
+  // Auto-aprova tools HIGH sem prompt interativo. Util em dev/CI/runtime
+  // headless. Em prod (TTY), preferir manter false e responder ao prompt.
+  // Env var FZAGENT_AUTO_CONFIRM_HIGH=1 ainda funciona como override one-shot.
+  AUTO_CONFIRM_HIGH: boolStr(false),
 
   WIKI_DIR: z.string().default('wiki'),
   WIKI_DB: z.string().default('db/wiki.sqlite'),
@@ -79,6 +84,20 @@ export const FzagentConfSchema = z.object({
   DB_DIR: z.string().default('db'),
   RAW_DIR: z.string().default('raw'),
   SKILLS_CLAUDE_DIR: z.string().default('skills-claude'),
+  LOGS_DIR: z.string().default('logs'),
+  SKILL_AUDIT_FILE: z.string().default('skill-invocations.jsonl'),
+
+  // Logging — defaults aqui; .env (LOG_LEVEL/LOG_FORMAT/LOG_FILE) tem precedencia.
+  // LOG_LEVEL vocabulario oficial: verbose | debug | info | silent.
+  //   - verbose: alias de debug (conveniencia operacional)
+  //   - debug:   tudo (info + diagnostico interno)
+  //   - info:    eventos operacionais normais (default)
+  //   - silent:  nada
+  LOG_LEVEL: z.string().default('info'),
+  LOG_FORMAT: z.enum(['pretty', 'json', 'silent']).default('pretty'),
+  // LOG_FILE: caminho relativo ao cwd OU absoluto. Vazio = console-only.
+  // Quando setado, escreve em arquivo JSON estruturado ADEMAIS do console.
+  LOG_FILE: z.string().optional(),
 });
 
 export type FzagentConf = z.infer<typeof FzagentConfSchema>;
@@ -115,11 +134,10 @@ export const EnvSchema = z
     QDRANT_API_KEY: z.string().optional(),
     // Web search
     BRAVE_SEARCH_API_KEY: z.string().optional(),
-    // Logs
-    LOG_LEVEL: z
-      .enum(['trace', 'debug', 'info', 'warn', 'error', 'fatal', 'silent'])
-      .default('info'),
-    LOG_FORMAT: z.enum(['pretty', 'json', 'silent']).default('pretty'),
+    // Logs — override do conf (env tem precedencia, mas defaults vivem no conf).
+    LOG_LEVEL: z.string().optional(),
+    LOG_FORMAT: z.enum(['pretty', 'json', 'silent']).optional(),
+    LOG_FILE: z.string().optional(),
   })
   .passthrough();
 

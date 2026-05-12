@@ -30,7 +30,9 @@ describe('loadConfig', () => {
     expect(conf.AGENTIC_MAX_ITERATIONS).toBe(20);
     expect(conf.EMBEDDINGS_DIM).toBe(768);
     expect(env.OLLAMA_BASE_URL).toBe('http://192.168.0.101:11434');
-    expect(env.LOG_LEVEL).toBe('info');
+    // LOG_LEVEL agora vive no fzagent.conf (override via env opcional).
+    expect(conf.LOG_LEVEL).toBe('info');
+    expect(env.LOG_LEVEL).toBeUndefined();
   });
 
   it('reads fzagent.conf when present', () => {

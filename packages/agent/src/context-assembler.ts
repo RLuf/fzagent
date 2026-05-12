@@ -71,7 +71,11 @@ export async function assembleSystemPrompt(input: AssembleInput): Promise<string
     .list()
     .map((t) => `- ${t.name} [${t.permissions}]: ${t.description}`)
     .join('\n');
-  if (toolsList) parts.push(`# Tools disponiveis\n${toolsList}`);
+  if (toolsList) {
+    parts.push(
+      `# Tools disponiveis\nVoce TEM acesso direto as ferramentas abaixo no proprio workspace do usuario. Para qualquer pedido que envolva CRIAR/EDITAR arquivos, EXECUTAR comandos, BUSCAR informacao ou INVOCAR skills, USE estas ferramentas. NAO descreva passos manuais ao usuario e NAO diga 'nao consigo' enquanto houver uma tool aplicavel — chame-as.\n\n${toolsList}`,
+    );
+  }
 
   // 5. Memory (RAG) — opcional
   if (input.ragSources && input.ragSources.length > 0 && input.task) {

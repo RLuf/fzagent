@@ -33,6 +33,9 @@ export interface GoogleAdapterOptions extends BaseProviderOptions {
 export class GoogleProvider extends BaseLLMProvider {
   readonly name = 'google' as const;
   readonly models: readonly string[];
+  // Gemini CLI nao expoe tool calling estruturado — stdout e texto puro.
+  // Router precisa saber para nao roteear requests tool-using para ca.
+  override readonly supportsTools = false;
   private readonly cliCommand: string;
 
   constructor(opts: GoogleAdapterOptions) {

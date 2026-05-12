@@ -66,6 +66,11 @@ export type StreamChunk =
 export interface LLMProvider {
   readonly name: LLMProviderName;
   readonly models: readonly string[];
+  // Capability negotiation. Quando o caller fornece `tools` em CompleteOptions,
+  // o router SALTA providers que declaram `supportsTools=false` em vez de
+  // degradar silenciosamente. Default conservador: `true` (cabe ao adapter
+  // declarar false quando o canal nao suporta — ex: Gemini CLI puro).
+  readonly supportsTools: boolean;
   complete(messages: Message[], options: CompleteOptions): Promise<CompleteResult>;
   stream(messages: Message[], options: CompleteOptions): AsyncIterable<StreamChunk>;
 }

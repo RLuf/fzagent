@@ -28,7 +28,7 @@ import {
   ProviderRouter,
   type LLMProvider,
 } from '@fzagent/providers';
-import { registerBuiltinSkills, SkillRegistry } from '@fzagent/skills';
+import { JsonlSkillAuditor, registerBuiltinSkills, SkillRegistry } from '@fzagent/skills';
 
 export interface FzagentRuntime {
   logger: FzagentLogger;
@@ -51,10 +51,23 @@ export interface BuildOptions {
   silent?: boolean;
 }
 
-export function buildRuntime(opts: BuildOptions = {}): FzagentRuntime {
+export async function buildRuntime(opts: BuildOptions = {}): Promise<FzagentRuntime> {
   const cwd = opts.cwd ?? process.cwd();
   const { conf, env } = loadConfig({ cwd });
-  const logger = createLogger({ level: env.LOG_LEVEL, format: env.LOG_FORMAT });
+  // Prioridade: .env (override) > fzagent.conf (default). Para LOG_FILE,
+  // resolve caminho relativo contra o cwd quando nao for absoluto.
+  const rawLogFile = env.LOG_FILE ?? conf.LOG_FILE;
+  const logFilePath =
+    rawLogFile && rawLogFile.length > 0
+      ? rawLogFile.startsWith('/')
+        ? rawLogFile
+        : join(cwd, rawLogFile)
+      : undefined;
+  const logger = createLogger({
+    level: env.LOG_LEVEL ?? conf.LOG_LEVEL,
+    format: env.LOG_FORMAT ?? conf.LOG_FORMAT,
+    ...(logFilePath !== undefined && { filePath: logFilePath }),
+  });
   const eventBus = createEventBus();
 
   // Provider construction com tolerancia a credencial faltando.
@@ -148,15 +161,24 @@ export function buildRuntime(opts: BuildOptions = {}): FzagentRuntime {
   });
 
   // Skills
+  const auditor = new JsonlSkillAuditor({
+    filePath: join(cwd, conf.LOGS_DIR, conf.SKILL_AUDIT_FILE),
+    logger,
+  });
   const skills = new SkillRegistry({
     dir: join(cwd, conf.GENAISRC_DIR),
     logger,
     highRequiresConfirm: conf.SKILL_HIGH_PERMISSION_REQUIRES_CONFIRM,
+    auditor,
   });
   registerBuiltinSkills(skills);
+  await skills.loadAll();
 
-  // Tools
-  const tools = new ToolRegistry();
+  // Tools — com gate HIGH paridade ao SkillRegistry.
+  const tools = new ToolRegistry({
+    highRequiresConfirm: conf.TOOL_HIGH_PERMISSION_REQUIRES_CONFIRM,
+    onHighConfirm: makeHighConfirm(logger, conf.AUTO_CONFIRM_HIGH),
+  });
   registerBuiltinTools(tools);
 
   // Session store
@@ -174,6 +196,49 @@ export function buildRuntime(opts: BuildOptions = {}): FzagentRuntime {
     skills,
     tools,
     sessionStore,
+  };
+}
+
+// Callback TTY-aware para confirmacao de tools HIGH.
+// Resolucao em ordem:
+// 1. Env var FZAGENT_AUTO_CONFIRM_HIGH=1: bypassa (override one-shot).
+// 2. fzagent.conf AUTO_CONFIRM_HIGH=true: bypassa (persistente).
+// 3. TTY interativo: pergunta no terminal e bloqueia ate y/N.
+// 4. Non-TTY (pipe, runtime headless): nega (politica safe).
+function makeHighConfirm(
+  logger: FzagentLogger,
+  autoConfirmFromConf: boolean,
+): (name: string) => Promise<boolean> | boolean {
+  return async (toolName: string): Promise<boolean> => {
+    if (process.env['FZAGENT_AUTO_CONFIRM_HIGH'] === '1') {
+      logger.warn({ toolName }, 'HIGH tool auto-confirmed via FZAGENT_AUTO_CONFIRM_HIGH=1');
+      return true;
+    }
+    if (autoConfirmFromConf) {
+      logger.warn(
+        { toolName },
+        'HIGH tool auto-confirmed via AUTO_CONFIRM_HIGH=true no fzagent.conf',
+      );
+      return true;
+    }
+    const isTTY = Boolean(process.stdin.isTTY && process.stdout.isTTY);
+    if (!isTTY) {
+      logger.warn(
+        { toolName },
+        'HIGH tool denied: stdin/stdout nao sao TTY. Setar AUTO_CONFIRM_HIGH=true no fzagent.conf ou FZAGENT_AUTO_CONFIRM_HIGH=1 para bypass.',
+      );
+      return false;
+    }
+    const { createInterface } = await import('node:readline/promises');
+    const rl = createInterface({ input: process.stdin, output: process.stdout });
+    try {
+      const ans = await rl.question(
+        `\n  ⚠  Tool HIGH '${toolName}' pediu execucao. Aprovar? [y/N]: `,
+      );
+      return ans.trim().toLowerCase().startsWith('y');
+    } finally {
+      rl.close();
+    }
   };
 }
 

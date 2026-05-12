@@ -62,6 +62,33 @@ SKILL_REGISTRY_SCAN_INTERVAL=60000
 # Skills HIGH-permission exigem confirmacao do usuario antes de executar.
 SKILL_HIGH_PERMISSION_REQUIRES_CONFIRM=true
 
+# Tools nativas HIGH (ex: shell.exec) exigem confirmacao antes de executar.
+# Paridade com skills. Em runtime non-TTY (pipe, script, headless), o gate
+# nega por default; setar AUTO_CONFIRM_HIGH=true ou env FZAGENT_AUTO_CONFIRM_HIGH=1
+# para bypassar.
+TOOL_HIGH_PERMISSION_REQUIRES_CONFIRM=true
+
+# Auto-aprova TODAS as tools HIGH (skill ou nativa) sem prompt. Util em dev
+# ou runtime headless quando o operador ja decidiu confiar. Override one-shot:
+# FZAGENT_AUTO_CONFIRM_HIGH=1 fzagent "..."
+AUTO_CONFIRM_HIGH=false
+
+# ---- Logging ---------------------------------------------------------------
+# Vocabulario oficial do LOG_LEVEL: verbose | debug | info | silent.
+#   - verbose: alias de debug (conveniencia operacional)
+#   - debug:   tudo (info + diagnostico interno)
+#   - info:    eventos operacionais normais (default)
+#   - silent:  nada
+LOG_LEVEL=info
+
+# Formato do output no console: pretty (cores + indent) | json | silent.
+LOG_FORMAT=pretty
+
+# Caminho do arquivo de log (relativo ao cwd OU absoluto). Vazio = somente console.
+# Quando setado, escreve JSON estruturado ADEMAIS do console (dual sink).
+# Pasta criada automaticamente se nao existir.
+# LOG_FILE=fzagent.log
+
 # ---- Cerebro secundario (Wiki + Qdrant) ------------------------------------
 # Pasta raiz do wiki markdown (versionado em git).
 WIKI_DIR=wiki

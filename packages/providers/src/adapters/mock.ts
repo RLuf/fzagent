@@ -14,11 +14,15 @@ export interface MockBehavior {
   error?: unknown;
   // Stream chunks pre-canned.
   streamChunks?: StreamChunk[];
+  // Override do supportsTools (default true). Permite testar skip behavior
+  // do router quando um provider declara false.
+  supportsTools?: boolean;
 }
 
 export class MockProvider implements LLMProvider {
   readonly name: LLMProviderName;
   readonly models: readonly string[];
+  readonly supportsTools: boolean;
   public callCount = 0;
   public lastMessages: Message[] = [];
   public lastOptions: CompleteOptions | undefined;
@@ -30,6 +34,7 @@ export class MockProvider implements LLMProvider {
   ) {
     this.name = name;
     this.models = models;
+    this.supportsTools = behavior.supportsTools ?? true;
   }
 
   async complete(messages: Message[], options: CompleteOptions): Promise<CompleteResult> {

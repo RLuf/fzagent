@@ -16,6 +16,8 @@ import { pathToFileURL } from 'node:url';
 import type { FzagentLogger } from '@fzagent/core';
 import chokidar from 'chokidar';
 
+import type { SkillAuditor, SkillInvocationDecision, SkillInvocationOutcome } from './audit.js';
+import { hashPayload } from './audit.js';
 import type { LoadedSkill, SkillContext, SkillSpec } from './types.js';
 
 export interface SkillRegistryOptions {
@@ -28,6 +30,8 @@ export interface SkillRegistryOptions {
   highRequiresConfirm?: boolean;
   // callback de confirmacao para skills HIGH (recebe nome, devolve boolean).
   onHighConfirm?: (name: string) => Promise<boolean> | boolean;
+  // auditor opcional: recebe um evento por invocacao (qualquer outcome).
+  auditor?: SkillAuditor;
 }
 
 export class SkillRegistry {
@@ -37,12 +41,14 @@ export class SkillRegistry {
   private watcher: ReturnType<typeof chokidar.watch> | null = null;
   readonly highRequiresConfirm: boolean;
   readonly onHighConfirm: ((name: string) => Promise<boolean> | boolean) | undefined;
+  readonly auditor: SkillAuditor | undefined;
 
   constructor(opts: SkillRegistryOptions) {
     this.logger = opts.logger?.child({ scope: 'skill-registry' });
     this.dir = resolve(opts.dir);
     this.highRequiresConfirm = opts.highRequiresConfirm ?? true;
     this.onHighConfirm = opts.onHighConfirm;
+    this.auditor = opts.auditor;
     if (opts.watch) this.startWatching();
   }
 
@@ -105,25 +111,114 @@ export class SkillRegistry {
   requiresConfirmation(name: string): boolean {
     const s = this.skills.get(name);
     if (!s) return false;
-    // So exige confirm se a skill e HIGH, a flag esta on E o caller forneceu
-    // callback. Sem callback, nao bloqueia (o caller assumiu o risco ao
-    // construir o registry com highRequiresConfirm=true sem onHighConfirm).
-    return this.highRequiresConfirm && s.permissions === 'high' && this.onHighConfirm !== undefined;
+    // Sem callback, nao bloqueia (o caller assumiu o risco ao construir o
+    // registry com highRequiresConfirm=true sem onHighConfirm).
+    if (this.onHighConfirm === undefined) return false;
+    // Override explicito do manifest (L99) tem precedencia sobre a derivacao
+    // baseada em permissions. Permite (a) MEDIUM exigir confirm; (b) HIGH
+    // whitelisted como nao-confirmavel.
+    if (s.requiresConfirmation === true) return true;
+    if (s.requiresConfirmation === false) return false;
+    // Default: deriva de permissions === 'high' + flag global.
+    return this.highRequiresConfirm && s.permissions === 'high';
   }
 
   async invoke(name: string, rawInput: unknown, ctx: SkillContext): Promise<unknown> {
+    const start = Date.now();
     const s = this.skills.get(name);
-    if (!s) throw new Error(`Skill not found: ${name}`);
+    if (!s) {
+      this.audit({
+        name,
+        skill: undefined,
+        rawInput,
+        decision: 'auto',
+        outcome: 'error',
+        durationMs: 0,
+        error: `Skill not found: ${name}`,
+        output: null,
+        ctx,
+      });
+      throw new Error(`Skill not found: ${name}`);
+    }
 
+    let decision: SkillInvocationDecision = 'auto';
     if (this.requiresConfirmation(name) && this.onHighConfirm) {
       const ok = await Promise.resolve(this.onHighConfirm(name));
+      decision = ok ? 'confirmed' : 'denied';
       if (!ok) {
+        this.audit({
+          name,
+          skill: s,
+          rawInput,
+          decision,
+          outcome: 'error',
+          durationMs: Date.now() - start,
+          error: `Skill '${name}' requires confirmation (denied)`,
+          output: null,
+          ctx,
+        });
         throw new Error(`Skill '${name}' requires confirmation (denied)`);
       }
     }
 
-    const validated = s.inputSchema.parse(rawInput);
-    return await s.run(ctx, validated);
+    try {
+      const validated = s.inputSchema.parse(rawInput);
+      const out = await s.run(ctx, validated);
+      this.audit({
+        name,
+        skill: s,
+        rawInput,
+        decision,
+        outcome: 'ok',
+        durationMs: Date.now() - start,
+        error: null,
+        output: out,
+        ctx,
+      });
+      return out;
+    } catch (err) {
+      this.audit({
+        name,
+        skill: s,
+        rawInput,
+        decision,
+        outcome: 'error',
+        durationMs: Date.now() - start,
+        error: err instanceof Error ? err.message : String(err),
+        output: null,
+        ctx,
+      });
+      throw err;
+    }
+  }
+
+  private audit(params: {
+    name: string;
+    skill: LoadedSkill | undefined;
+    rawInput: unknown;
+    decision: SkillInvocationDecision;
+    outcome: SkillInvocationOutcome;
+    durationMs: number;
+    error: string | null;
+    output: unknown;
+    ctx: SkillContext;
+  }): void {
+    if (!this.auditor) return;
+    this.auditor.record({
+      timestamp: new Date().toISOString(),
+      skill: params.name,
+      targetDomain: params.skill?.targetDomain,
+      permissions: params.skill?.permissions,
+      isDestructive: params.skill?.isDestructive,
+      inputHash: hashPayload(params.rawInput),
+      outputHash: params.output === null ? null : hashPayload(params.output),
+      decision: params.decision,
+      outcome: params.outcome,
+      durationMs: params.durationMs,
+      error: params.error,
+      agentId: params.ctx.agentId,
+      sessionId: params.ctx.sessionId,
+    });
   }
 
   startWatching(): void {

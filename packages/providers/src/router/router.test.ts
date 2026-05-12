@@ -19,6 +19,47 @@ function mkResult(overrides: Partial<CompleteResult> = {}): CompleteResult {
   };
 }
 
+describe('ProviderRouter capability negotiation', () => {
+  it('skips provider without tool support when request has tools', async () => {
+    const cliOnly = new MockProvider('google', ['m'], {
+      supportsTools: false,
+      responses: [mkResult({ content: 'gemini-cli' })],
+    });
+    const real = new MockProvider('anthropic', ['m'], {
+      responses: [mkResult({ content: 'anthropic-real' })],
+    });
+    const router = new ProviderRouter({
+      providers: [cliOnly, real],
+      fallbackOrder: ['google', 'anthropic'],
+      logger: silentLogger,
+      maxAttemptsPerProvider: 1,
+    });
+    const r = await router.complete([{ role: 'user', content: 'hi' }], {
+      model: 'm',
+      tools: [{ name: 't', description: 'd', inputSchema: { type: 'object' } }],
+    });
+    expect(r.content).toBe('anthropic-real');
+    expect(cliOnly.callCount).toBe(0);
+    expect(real.callCount).toBe(1);
+  });
+
+  it('uses tool-less provider when request has no tools', async () => {
+    const cliOnly = new MockProvider('google', ['m'], {
+      supportsTools: false,
+      responses: [mkResult({ content: 'gemini-cli' })],
+    });
+    const router = new ProviderRouter({
+      providers: [cliOnly],
+      fallbackOrder: ['google'],
+      logger: silentLogger,
+      maxAttemptsPerProvider: 1,
+    });
+    const r = await router.complete([{ role: 'user', content: 'hi' }], { model: 'm' });
+    expect(r.content).toBe('gemini-cli');
+    expect(cliOnly.callCount).toBe(1);
+  });
+});
+
 describe('ProviderRouter.complete', () => {
   it('calls the first provider that succeeds', async () => {
     const a = new MockProvider('anthropic', ['m'], { responses: [mkResult({ content: 'A' })] });

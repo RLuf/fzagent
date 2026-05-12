@@ -84,3 +84,76 @@ describe('ToolRegistry', () => {
     });
   });
 });
+
+const highTool = defineTool({
+  name: 'high-op',
+  description: 'high-risk op',
+  inputSchema: z.object({}),
+  permissions: 'high',
+  async run() {
+    return 'executed';
+  },
+});
+
+describe('ToolRegistry HIGH gate (paridade com SkillRegistry)', () => {
+  it('executa HIGH normalmente quando highRequiresConfirm=false', async () => {
+    const reg = new ToolRegistry({ highRequiresConfirm: false }).register(highTool);
+    const r = await reg.execute('high-op', {}, ctx());
+    expect(r.ok).toBe(true);
+    expect(r.output).toBe('executed');
+  });
+
+  it('nega HIGH quando highRequiresConfirm=true e sem callback', async () => {
+    const reg = new ToolRegistry({ highRequiresConfirm: true }).register(highTool);
+    const r = await reg.execute('high-op', {}, ctx());
+    expect(r.ok).toBe(false);
+    expect(String(r.output)).toMatch(/no onHighConfirm callback/);
+  });
+
+  it('executa HIGH quando callback retorna true', async () => {
+    const calls: string[] = [];
+    const reg = new ToolRegistry({
+      highRequiresConfirm: true,
+      onHighConfirm: (n) => {
+        calls.push(n);
+        return true;
+      },
+    }).register(highTool);
+    const r = await reg.execute('high-op', {}, ctx());
+    expect(r.ok).toBe(true);
+    expect(calls).toEqual(['high-op']);
+  });
+
+  it('nega HIGH quando callback retorna false', async () => {
+    const reg = new ToolRegistry({
+      highRequiresConfirm: true,
+      onHighConfirm: () => false,
+    }).register(highTool);
+    const r = await reg.execute('high-op', {}, ctx());
+    expect(r.ok).toBe(false);
+    expect(String(r.output)).toMatch(/denied by confirmation callback/);
+  });
+
+  it('aceita callback async (Promise<boolean>)', async () => {
+    const reg = new ToolRegistry({
+      highRequiresConfirm: true,
+      onHighConfirm: async () => Promise.resolve(true),
+    }).register(highTool);
+    const r = await reg.execute('high-op', {}, ctx());
+    expect(r.ok).toBe(true);
+  });
+
+  it('nao pede confirm para tools LOW mesmo com flag on', async () => {
+    let asked = false;
+    const reg = new ToolRegistry({
+      highRequiresConfirm: true,
+      onHighConfirm: () => {
+        asked = true;
+        return false;
+      },
+    }).register(echoTool);
+    const r = await reg.execute('echo', { msg: 'hi' }, ctx());
+    expect(r.ok).toBe(true);
+    expect(asked).toBe(false);
+  });
+});

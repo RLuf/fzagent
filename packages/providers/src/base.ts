@@ -18,6 +18,9 @@ export interface BaseProviderOptions {
 export abstract class BaseLLMProvider implements LLMProvider {
   abstract readonly name: LLMProviderName;
   abstract readonly models: readonly string[];
+  // Default conservador: assume suporte a tools. Adapters que nao suportam
+  // (ex: Gemini CLI) sobrescrevem para false.
+  readonly supportsTools: boolean = true;
 
   protected readonly config: ProviderConfig;
   protected readonly logger: FzagentLogger;

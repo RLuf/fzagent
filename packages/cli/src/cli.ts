@@ -64,8 +64,8 @@ agent
 agent
   .command('skills')
   .description('lista skills disponiveis')
-  .action(() => {
-    const rt = buildRuntime({ silent: true });
+  .action(async () => {
+    const rt = await buildRuntime({ silent: true });
     for (const s of rt.skills.list()) {
       console.log(`${pc.cyan(s.name)} [${s.permissions ?? 'low'}] — ${s.description}`);
     }
@@ -76,10 +76,91 @@ agent
   .argument('[args...]')
   .description('invoca uma skill com input JSON')
   .action(async (skillId: string, args: string[]) => {
-    const rt = buildRuntime({ silent: true });
+    const rt = await buildRuntime({ silent: true });
     const input = args.length > 0 ? JSON.parse(args.join(' ')) : {};
     const out = await rt.skills.invoke(skillId, input, { cwd: process.cwd(), logger: rt.logger });
     console.log(typeof out === 'string' ? out : JSON.stringify(out, null, 2));
+  });
+
+// skill — comandos dedicados de inspecao do registry (manifest v1).
+const skill = program.command('skill').description('inspeciona o SkillRegistry');
+skill
+  .command('list')
+  .option('--domain <d>', 'filtra por targetDomain')
+  .option('--destructive', 'apenas skills declaradas destrutivas')
+  .description('lista skills com manifest v1 (nome, perm, domain, destrutiva)')
+  .action(async (opts: { domain?: string; destructive?: boolean }) => {
+    const rt = await buildRuntime({ silent: true });
+    for (const s of rt.skills.list()) {
+      if (opts.domain && (s.targetDomain ?? 'custom') !== opts.domain) continue;
+      if (opts.destructive && !s.isDestructive) continue;
+      const dom = pc.dim(`[${s.targetDomain ?? 'custom'}]`);
+      const perm = pc.yellow(`[${s.permissions ?? 'low'}]`);
+      const flag = s.isDestructive ? pc.red(' DESTRUCTIVE') : '';
+      console.log(`${pc.cyan(s.name)} ${perm} ${dom}${flag} — ${s.description}`);
+    }
+  });
+
+skill
+  .command('describe <name>')
+  .description('imprime o manifest completo de uma skill')
+  .action(async (name: string) => {
+    const rt = await buildRuntime({ silent: true });
+    const s = rt.skills.get(name);
+    if (!s) {
+      console.error(pc.red(`skill nao encontrada: ${name}`));
+      process.exit(1);
+    }
+    const manifest = {
+      name: s.name,
+      description: s.description,
+      version: s.version ?? '0.1.0',
+      permissions: s.permissions ?? 'low',
+      category: s.category ?? 'custom',
+      targetDomain: s.targetDomain ?? 'custom',
+      isDestructive: s.isDestructive ?? false,
+      requiresConfirmation: rt.skills.requiresConfirmation(name),
+      triggers: s.triggers ?? [],
+      filePath: s.filePath,
+    };
+    console.log(JSON.stringify(manifest, null, 2));
+  });
+
+// tools — inspecao das tools nativas (fs, shell, web, wiki, skill.invoke, etc.)
+const tools = program.command('tools').description('inspeciona as tools nativas do agente');
+tools
+  .command('list')
+  .description('lista todas as tools nativas registradas no ToolRegistry')
+  .action(async () => {
+    const rt = await buildRuntime({ silent: true });
+    for (const t of rt.tools.list()) {
+      console.log(`${pc.cyan(t.name)} ${pc.yellow(`[${t.permissions}]`)} — ${t.description}`);
+    }
+  });
+
+tools
+  .command('describe <name>')
+  .description('imprime schema da tool')
+  .action(async (name: string) => {
+    const rt = await buildRuntime({ silent: true });
+    const t = rt.tools.get(name);
+    if (!t) {
+      console.error(pc.red(`tool nao encontrada: ${name}`));
+      process.exit(1);
+    }
+    const llmShape = rt.tools.toLLMTools().find((x) => x.name === name);
+    console.log(
+      JSON.stringify(
+        {
+          name: t.name,
+          description: t.description,
+          permissions: t.permissions,
+          inputSchema: llmShape?.inputSchema,
+        },
+        null,
+        2,
+      ),
+    );
   });
 
 // wiki
@@ -88,7 +169,7 @@ wiki
   .command('ingest <path>')
   .option('--summarize', 'gera resumo via LLM')
   .action(async (path: string, opts: { summarize?: boolean }) => {
-    const rt = buildRuntime({ silent: true });
+    const rt = await buildRuntime({ silent: true });
     try {
       const { ingest } = await import('@fzagent/memory');
       const ev = await ingest(
@@ -114,7 +195,7 @@ wiki
   .option('--top <n>', 'top-K', '5')
   .option('--synthesize', 'sintetiza resposta via LLM')
   .action(async (q: string, opts: { top: string; synthesize?: boolean }) => {
-    const rt = buildRuntime({ silent: true });
+    const rt = await buildRuntime({ silent: true });
     try {
       const { query } = await import('@fzagent/memory');
       const r = await query(
@@ -138,8 +219,8 @@ wiki
     }
   });
 
-wiki.command('lint').action(() => {
-  const rt = buildRuntime({ silent: true });
+wiki.command('lint').action(async () => {
+  const rt = await buildRuntime({ silent: true });
   try {
     const r = rt.indexer.lint();
     console.log(`Orfas: ${r.orphans.length}`);
@@ -154,8 +235,8 @@ wiki.command('lint').action(() => {
   }
 });
 
-wiki.command('stats').action(() => {
-  const rt = buildRuntime({ silent: true });
+wiki.command('stats').action(async () => {
+  const rt = await buildRuntime({ silent: true });
   try {
     console.log(rt.indexer.stats());
   } finally {
@@ -167,7 +248,7 @@ wiki.command('stats').action(() => {
 // vector
 const vec = program.command('vector').description('vector store (Qdrant)');
 vec.command('validate').action(async () => {
-  const rt = buildRuntime({ silent: true });
+  const rt = await buildRuntime({ silent: true });
   try {
     const stats = await rt.qdrant.validate();
     for (const s of stats) {
@@ -187,7 +268,7 @@ vec
   .command('recreate <name>')
   .description('recria a collection (DESTRUTIVO)')
   .action(async (name: string) => {
-    const rt = buildRuntime({ silent: true });
+    const rt = await buildRuntime({ silent: true });
     try {
       await rt.qdrant.recreateCollection(name);
       console.log(pc.green('recriada:'), name);
@@ -201,8 +282,8 @@ vec
 program
   .command('config')
   .description('imprime configuracao efetiva (.env + fzagent.conf merged)')
-  .action(() => {
-    const rt = buildRuntime({ silent: true });
+  .action(async () => {
+    const rt = await buildRuntime({ silent: true });
     console.log(JSON.stringify({ conf: rt.conf, env: maskSecrets(rt.env) }, null, 2));
     rt.indexer.close();
     rt.sessionStore.close();
@@ -225,7 +306,7 @@ async function runAgentLoop(
   task: string,
   opts: { model?: string; maxIterations?: number; tokenBudget?: number },
 ): Promise<void> {
-  const rt = buildRuntime({ silent: true });
+  const rt = await buildRuntime({ silent: true });
   if (opts.maxIterations !== undefined) rt.conf.AGENTIC_MAX_ITERATIONS = opts.maxIterations;
   if (opts.tokenBudget !== undefined) rt.conf.AGENTIC_TOKEN_BUDGET = opts.tokenBudget;
   const a = buildAgent(rt);

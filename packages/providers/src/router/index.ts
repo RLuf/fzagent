@@ -78,8 +78,21 @@ export class ProviderRouter {
   async complete(messages: Message[], options: CompleteOptions): Promise<CompleteResult> {
     let lastError: unknown;
     const skipped: string[] = [];
+    const toolsRequested = (options.tools?.length ?? 0) > 0;
 
     for (const provider of this.orderedProviders) {
+      // Capability negotiation: pula provider que nao suporta tools quando
+      // a request as fornece. Evita degradacao silenciosa (modelo recebe
+      // tools no system prompt mas nao consegue invocar -> responde em prosa).
+      if (toolsRequested && !provider.supportsTools) {
+        this.logger.debug(
+          { provider: provider.name },
+          'provider does not support tools, skipping (request has tools)',
+        );
+        skipped.push(provider.name);
+        continue;
+      }
+
       const cb = this.breakers.get(provider.name);
       if (cb && !cb.canExecute()) {
         this.logger.debug({ provider: provider.name }, 'circuit-breaker open, skipping');
@@ -90,7 +103,7 @@ export class ProviderRouter {
       const start = Date.now();
       const useModel = provider.models.includes(options.model)
         ? options.model
-        : provider.models[0] ?? options.model;
+        : (provider.models[0] ?? options.model);
 
       try {
         const result = await retry(
@@ -141,14 +154,22 @@ export class ProviderRouter {
 
   async *stream(messages: Message[], options: CompleteOptions): AsyncIterable<StreamChunk> {
     let lastError: unknown;
+    const toolsRequested = (options.tools?.length ?? 0) > 0;
 
     for (const provider of this.orderedProviders) {
+      if (toolsRequested && !provider.supportsTools) {
+        this.logger.debug(
+          { provider: provider.name },
+          'provider does not support tools, skipping (stream)',
+        );
+        continue;
+      }
       const cb = this.breakers.get(provider.name);
       if (cb && !cb.canExecute()) continue;
 
       const useModel = provider.models.includes(options.model)
         ? options.model
-        : provider.models[0] ?? options.model;
+        : (provider.models[0] ?? options.model);
 
       const start = Date.now();
       try {

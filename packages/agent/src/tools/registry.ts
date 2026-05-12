@@ -1,4 +1,8 @@
 // ToolRegistry: registra tools, expoe schemas LLM-friendly e dispatch validado.
+//
+// Gate de confirmacao (paridade com SkillRegistry): tools com permissions==='high'
+// passam por onHighConfirm callback quando highRequiresConfirm=true. Sem callback,
+// a politica eh deny (seguro por default em runtime nao-interativo).
 
 import type { ToolDefinition } from '@fzagent/providers';
 
@@ -11,8 +15,24 @@ export interface ExecuteResult {
   durationMs: number;
 }
 
+export interface ToolRegistryOptions {
+  // Quando true, tools com permissions==='high' passam por onHighConfirm
+  // callback antes de executar. Sem callback, o gate eh deny.
+  highRequiresConfirm?: boolean;
+  // Callback de confirmacao para tools HIGH (recebe nome, devolve boolean).
+  // Async-aware: pode retornar Promise<boolean>.
+  onHighConfirm?: (toolName: string) => Promise<boolean> | boolean;
+}
+
 export class ToolRegistry {
   private readonly tools = new Map<string, Tool>();
+  readonly highRequiresConfirm: boolean;
+  readonly onHighConfirm: ((toolName: string) => Promise<boolean> | boolean) | undefined;
+
+  constructor(opts: ToolRegistryOptions = {}) {
+    this.highRequiresConfirm = opts.highRequiresConfirm ?? false;
+    this.onHighConfirm = opts.onHighConfirm;
+  }
 
   register<TIn, TOut>(tool: Tool<TIn, TOut>): this {
     if (this.tools.has(tool.name)) {
@@ -58,6 +78,27 @@ export class ToolRegistry {
       };
     }
     const start = Date.now();
+
+    // Gate HIGH: tools com permissions==='high' passam por callback de confirm
+    // quando flag esta on. Sem callback: deny (seguro por default).
+    if (tool.permissions === 'high' && this.highRequiresConfirm) {
+      if (!this.onHighConfirm) {
+        return {
+          ok: false,
+          output: `Tool '${name}' requires HIGH confirmation but no onHighConfirm callback is configured (denied)`,
+          durationMs: Date.now() - start,
+        };
+      }
+      const allowed = await Promise.resolve(this.onHighConfirm(name));
+      if (!allowed) {
+        return {
+          ok: false,
+          output: `Tool '${name}' HIGH execution denied by confirmation callback`,
+          durationMs: Date.now() - start,
+        };
+      }
+    }
+
     let parsed: unknown;
     try {
       parsed = tool.inputSchema.parse(rawInput);

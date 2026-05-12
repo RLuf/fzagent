@@ -111,3 +111,88 @@ describe('cleanerSkill smoke', () => {
     expect(out.candidates).toEqual(['.cache']);
   });
 });
+
+describe('SkillRegistry manifest v1 (L99)', () => {
+  it('respeita requiresConfirmation=true em skill MEDIUM', async () => {
+    const { defineSkill } = await import('./types.js');
+    const z = (await import('zod')).z;
+    const mediumWithConfirm = defineSkill({
+      name: 'medium-locked',
+      description: 'medium com confirm explicito',
+      permissions: 'medium',
+      requiresConfirmation: true,
+      inputSchema: z.object({}),
+      async run() {
+        return 'ok';
+      },
+    });
+    let asked = false;
+    const reg = new SkillRegistry({
+      dir,
+      onHighConfirm: () => {
+        asked = true;
+        return true;
+      },
+    });
+    reg.registerProgrammatic(mediumWithConfirm);
+    expect(reg.requiresConfirmation('medium-locked')).toBe(true);
+    await reg.invoke('medium-locked', {}, ctx());
+    expect(asked).toBe(true);
+  });
+
+  it('respeita requiresConfirmation=false em skill HIGH (whitelist)', async () => {
+    const { defineSkill } = await import('./types.js');
+    const z = (await import('zod')).z;
+    const highWhitelisted = defineSkill({
+      name: 'high-readonly',
+      description: 'high mas read-only, sem confirm',
+      permissions: 'high',
+      requiresConfirmation: false,
+      inputSchema: z.object({}),
+      async run() {
+        return 'ok';
+      },
+    });
+    const reg = new SkillRegistry({ dir, onHighConfirm: () => true });
+    reg.registerProgrammatic(highWhitelisted);
+    expect(reg.requiresConfirmation('high-readonly')).toBe(false);
+  });
+
+  it('mantem default: HIGH sem override exige confirm', async () => {
+    const { defineSkill } = await import('./types.js');
+    const z = (await import('zod')).z;
+    const plainHigh = defineSkill({
+      name: 'plain-high',
+      description: 'high default',
+      permissions: 'high',
+      inputSchema: z.object({}),
+      async run() {
+        return 'ok';
+      },
+    });
+    const reg = new SkillRegistry({ dir, onHighConfirm: () => true });
+    reg.registerProgrammatic(plainHigh);
+    expect(reg.requiresConfirmation('plain-high')).toBe(true);
+  });
+
+  it('propaga targetDomain e isDestructive no spec carregado', async () => {
+    const { defineSkill } = await import('./types.js');
+    const z = (await import('zod')).z;
+    const skill = defineSkill({
+      name: 'kb-reader',
+      description: 'read-only kb query',
+      permissions: 'low',
+      targetDomain: 'kb',
+      isDestructive: false,
+      inputSchema: z.object({}),
+      async run() {
+        return 'ok';
+      },
+    });
+    const reg = new SkillRegistry({ dir });
+    reg.registerProgrammatic(skill);
+    const loaded = reg.get('kb-reader');
+    expect(loaded?.targetDomain).toBe('kb');
+    expect(loaded?.isDestructive).toBe(false);
+  });
+});

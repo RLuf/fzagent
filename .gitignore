@@ -59,3 +59,6 @@ external/*/dist/
 # artefatos do agente
 .fzagent/
 _fzagent_artifacts/
+
+# Claude Code worktrees temporarias
+.claude/worktrees/

@@ -55,6 +55,13 @@
     ]
   },
   "dependencies": {
-    "@google/gemini-cli": "^0.41.2"
+    "@google/gemini-cli": "^0.41.2",
+    "@google/generative-ai": "^0.24.1",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/socket.io": "^3.0.1",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "socket.io": "^4.8.3"
   }
 }

@@ -124,9 +124,10 @@ export async function buildRuntime(opts: BuildOptions = {}): Promise<FzagentRunt
     'google',
     () =>
       new GoogleProvider({
-        config: { ...cfg('google'), models: conf.MODELS_GOOGLE },
+        config: { ...cfg('google'), apiKey: env.GOOGLE_API_KEY ?? '', models: conf.MODELS_GOOGLE },
         logger,
-        env: env as unknown as Record<string, string | undefined>,
+        // Resquicio legado de quando chamava gemini-cli apenas (roginho)
+        // env: env as unknown as Record<string, string | undefined>,
       }),
   );
   tryAdd(
@@ -266,6 +267,12 @@ export function buildAgent(runtime: FzagentRuntime, agentId = 'fzagent'): Agent 
     circuitBreakerMaxFailures: runtime.conf.AGENTIC_CIRCUIT_BREAKER_MAX_FAILURES,
     circuitBreakerCooldownMs: runtime.conf.AGENTIC_CIRCUIT_BREAKER_COOLDOWN_MS,
     defaultModel: runtime.conf.DEFAULT_MODEL,
+    // FCC fix — wiring de chaves agora conectadas ao agent loop.
+    historyTurns: runtime.conf.AGENTIC_HISTORY_TURNS,
+    compactionThresholdPct: runtime.conf.AGENTIC_COMPACTION_THRESHOLD_PCT,
+    reinjectEvery: runtime.conf.AGENTIC_REINJECT_EVERY,
+    taskPinningEnabled: runtime.conf.AGENTIC_TASK_PINNING_ENABLED,
+    compactionKeepRecent: runtime.conf.AGENTIC_COMPACTION_KEEP_RECENT,
   };
   return new Agent({
     agentId,

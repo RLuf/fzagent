@@ -34,6 +34,26 @@ export type FzagentEventMap = {
     sessionId: string;
     failures: number;
   };
+  // FCC fix events (sub-sessao 1 + 2)
+  'agent.context-reinjected': {
+    agentId: string;
+    sessionId: string;
+    iteration: number;
+    tokensUsed: number;
+    reminderTokens: number;
+  };
+  'agent.compaction-triggered': {
+    agentId: string;
+    sessionId: string;
+    tokensBefore: number;
+  };
+  'agent.compaction-completed': {
+    agentId: string;
+    sessionId: string;
+    messagesBefore: number;
+    messagesAfter: number;
+    tokensSaved: number;
+  };
   'provider.failure': { provider: string; error: string; ts: number };
   'provider.success': { provider: string; latencyMs: number };
   'wiki.ingest': IngestEvent;

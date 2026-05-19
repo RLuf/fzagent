@@ -5,7 +5,15 @@
       "Bash(curl -sL https://github.com/rogerluft/buildoc/archive/refs/heads/main.tar.gz -o buildoc.tar.gz)",
       "Bash(tar -xzf buildoc.tar.gz)",
       "Bash(curl -sL https://github.com/RLuf/reversa/archive/refs/heads/main.tar.gz -o reversa.tar.gz)",
-      "Bash(tar -xzf reversa.tar.gz)"
+      "Bash(tar -xzf reversa.tar.gz)",
+      "Bash(git -C /home/rluft/fzagent remote -v)",
+      "Bash(git -C /home/rluft/fzagent worktree list)",
+      "Bash(git -C /home/rluft/fzagent branch -a)",
+      "Bash(git -C /home/rluft/fzagent log --oneline -5)",
+      "Bash(git -C /home/rluft/fzagent rev-parse --show-toplevel)",
+      "Bash(curl -s -o /dev/null -w \"DNS+TLS reachable: HTTP %{http_code} in %{time_total}s\\\\n\" --max-time 8 https://fzrepo.rogerluft.com.br/api/v1/version)",
+      "Bash(curl -s -o /dev/null -w \"Via IP: HTTP %{http_code} in %{time_total}s\\\\n\" --max-time 8 --resolve fzrepo.rogerluft.com.br:443:138.186.228.47 https://fzrepo.rogerluft.com.br/api/v1/version)",
+      "Bash(curl -s --max-time 8 https://fzrepo.rogerluft.com.br/api/v1/version)"
     ]
   },
   "outputStyle": "Explanatory"

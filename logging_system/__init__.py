@@ -1,0 +1,1 @@
+# Sistema de Logging e Memoria Permanente Gigantesca

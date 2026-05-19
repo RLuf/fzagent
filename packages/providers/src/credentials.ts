@@ -72,9 +72,7 @@ export function checkProviderAvailable(provider: ProviderName, env: CredEnv): bo
     case 'openrouter':
       return Boolean(getOpenRouterKey(env));
     case 'google':
-      // Para o adapter atual (CLI subprocess), basta o binario `gemini` na PATH.
-      // API key tambem e aceita para uso futuro via SDK direto.
-      return true; // checagem real e feita pelo adapter ao spawn.
+      return Boolean(getGoogleApiKey(env));
     case 'ollama':
       // Ollama nao precisa de credencial; basta a URL.
       return true;

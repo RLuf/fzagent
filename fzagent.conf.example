@@ -55,6 +55,23 @@ AGENTIC_HISTORY_TURNS=200
 # Compaction: percentual do orcamento de tokens em que dispara summarize.
 AGENTIC_COMPACTION_THRESHOLD_PCT=80
 
+# ---- FCC fix (Fractura de Coerencia Contextual) ----------------------------
+# Reinjecao periodica da tarefa a cada N iteracoes. A cada N, injeta uma
+# mensagem user sintetica `[LEMBRETE] Tarefa: ... Iter X/Y. Tokens Z/W.`
+# antes da chamada LLM. Mitiga "lost in the middle" (attention dilui em
+# sessoes longas). 0 desabilita. Default 5.
+AGENTIC_REINJECT_EVERY=5
+
+# Task pinning: quando true, a tarefa aparece no TOPO E no fim do system
+# prompt (sandwich). Mitiga "lost in the middle" capturando attention
+# nas duas pontas do prompt. false = comportamento legado (so no fim).
+AGENTIC_TASK_PINNING_ENABLED=true
+
+# Compaction: quantas unidades atomicas finais preservar ao comprimir
+# o meio do historico (sub-sessao 2 do FCC fix). Uma unidade eh um
+# user solo OU um par assistant+tool_results. Default 4.
+AGENTIC_COMPACTION_KEEP_RECENT=4
+
 # ---- Skill registry ---------------------------------------------------------
 # Diretorio escaneado para skills (relativo ao cwd do projeto).
 GENAISRC_DIR=genaisrc

@@ -169,6 +169,95 @@ describe('Agent.run', () => {
     }
   });
 
+  it('reinjeta tarefa a cada N iteracoes (FCC fix) — emite context-reinjected', async () => {
+    let calls = 0;
+    const provider = new MockProvider('anthropic', ['mock'], {
+      fn: () => {
+        calls += 1;
+        // 8 iters de tool_use seguidas, depois fim (forca passar de iter=5).
+        if (calls < 6) {
+          return {
+            content: '',
+            toolCalls: [{ id: `t${calls}`, name: 'echo', input: { text: `n${calls}` } }],
+            stopReason: 'tool_use' as const,
+            usage: { inputTokens: 5, outputTokens: 5 },
+            model: 'mock',
+            provider: 'anthropic' as const,
+          };
+        }
+        return {
+          content: 'done',
+          toolCalls: [],
+          stopReason: 'end_turn' as const,
+          usage: { inputTokens: 5, outputTokens: 5 },
+          model: 'mock',
+          provider: 'anthropic' as const,
+        };
+      },
+    });
+    const router = new ProviderRouter({
+      providers: [provider],
+      fallbackOrder: [provider.name],
+      logger: silent,
+      maxAttemptsPerProvider: 1,
+    });
+    const agent = new Agent({
+      agentId: 'tester',
+      router,
+      tools: new ToolRegistry().register(echoTool),
+      sessionStore: store,
+      config: {
+        maxIterations: 10,
+        tokenBudget: 1_000_000,
+        circuitBreakerMaxFailures: 5,
+        circuitBreakerCooldownMs: 1000,
+        defaultModel: 'mock',
+        // FCC: reinjeta a cada 3 iters para o teste ser rapido.
+        reinjectEvery: 3,
+        taskPinningEnabled: true,
+      },
+      logger: silent,
+      contextLayers: { identity: { name: 'a', description: 'b' } },
+    });
+    const events = await collect(agent.run({ task: 'loop teste reinjecao' }));
+    const reinjects = events.filter((e) => e.type === 'context-reinjected');
+    // Em 6 iters efetivas, esperamos reinjecao em iter=3 e iter=6.
+    expect(reinjects.length).toBeGreaterThanOrEqual(1);
+    if (reinjects[0]?.type === 'context-reinjected') {
+      expect(reinjects[0].iteration % 3).toBe(0);
+      expect(reinjects[0].reminderTokens).toBeGreaterThan(0);
+    }
+  });
+
+  it('legacy: reinjectEvery ausente NAO injeta lembretes (retrocompat)', async () => {
+    const provider = new MockProvider('anthropic', ['mock'], {
+      fn: () => {
+        if (provider.callCount < 4) {
+          return {
+            content: '',
+            toolCalls: [{ id: `t${provider.callCount}`, name: 'echo', input: { text: 'x' } }],
+            stopReason: 'tool_use' as const,
+            usage: { inputTokens: 5, outputTokens: 5 },
+            model: 'mock',
+            provider: 'anthropic' as const,
+          };
+        }
+        return {
+          content: 'done',
+          toolCalls: [],
+          stopReason: 'end_turn' as const,
+          usage: { inputTokens: 5, outputTokens: 5 },
+          model: 'mock',
+          provider: 'anthropic' as const,
+        };
+      },
+    });
+    const agent = makeAgent(provider);
+    const events = await collect(agent.run({ task: 'legacy run' }));
+    const reinjects = events.filter((e) => e.type === 'context-reinjected');
+    expect(reinjects.length).toBe(0);
+  });
+
   it('trips circuit breaker after consecutive failures', async () => {
     const provider = new MockProvider('anthropic', ['mock'], {
       error: { status: 401 }, // nao retentavel pelo router; vira FZ_PROVIDER

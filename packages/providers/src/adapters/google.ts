@@ -1,206 +1,277 @@
-// GoogleProvider — invoca o `gemini` CLI local via subprocess.
+// GoogleProvider — suporte nativo a Google Generative AI (Gemini) com Tool Calling.
 //
-// Decisao: o Google esta bloqueando OAuth para muitos casos de uso de
-// servidor. Por enquanto o adapter delega para o Gemini CLI (`@google/gemini-cli`)
-// instalado no PATH do usuario. O CLI gerencia auth (login, API key etc.)
-// e nos so invocamos com -p "<prompt>" -m "<model>".
+// Este adapter substitui a versao CLI por uma integracao direta via SDK.
+// Permite suporte completo a ferramentas, streaming e contagem de tokens.
 //
-// LIMITACOES:
-// - Tool calls nao sao suportadas via CLI (o stdout e texto puro).
-// - Token usage nao e reportado pelo CLI.
-// - Streaming e chunked-stdout (linhas) — convertemos em text-delta.
-// - TODO(future): adapter direto via API key quando o usuario quiser pular o CLI.
+// Decisoes:
+// 1. Usa @google/generative-ai para chamadas diretas.
+// 2. Transpila mensagens do fzagent para o formato do Gemini.
+// 3. Suporta Tool Calling (function calling) nativamente.
 
-import type { ChildProcess } from 'node:child_process';
-import { spawn } from 'node:child_process';
+import {
+  GoogleGenerativeAI,
+  type Content,
+  type GenerateContentRequest,
+  type Part,
+  type Tool,
+  type GenerationConfig,
+  type ModelParams,
+} from '@google/generative-ai';
 
-import type { Message } from '@fzagent/core';
+import type { Message, ToolCall } from '@fzagent/core';
 import { ProviderError } from '@fzagent/core';
 
 import { BaseLLMProvider, type BaseProviderOptions } from '../base.js';
-import type { CompleteOptions, CompleteResult, StopReason, StreamChunk } from '../types.js';
-
-const DEFAULT_MODELS: readonly string[] = ['gemini-2.5-pro', 'gemini-2.5-flash'];
-
-export interface GoogleAdapterOptions extends BaseProviderOptions {
-  // Override do binario (default = 'gemini'). Util quando o usuario tem
-  // outro executavel ou path absoluto.
-  cliCommand?: string;
-  // Permite injetar process.env-like (testes).
-  env?: Record<string, string | undefined>;
-}
+import { buildToolNameMap, denormalizeToolName, sanitizeToolName } from '../utils/tool-names.js';
+import type {
+  CompleteOptions,
+  CompleteResult,
+  StopReason,
+  StreamChunk,
+  ToolDefinition,
+} from '../types.js';
 
 export class GoogleProvider extends BaseLLMProvider {
   readonly name = 'google' as const;
   readonly models: readonly string[];
-  // Gemini CLI nao expoe tool calling estruturado — stdout e texto puro.
-  // Router precisa saber para nao roteear requests tool-using para ca.
-  override readonly supportsTools = false;
-  private readonly cliCommand: string;
+  override readonly supportsTools = true;
+  private readonly genAI: GoogleGenerativeAI;
 
-  constructor(opts: GoogleAdapterOptions) {
+  constructor(opts: BaseProviderOptions) {
     super(opts);
-    this.models = opts.config.models.length > 0 ? opts.config.models : DEFAULT_MODELS;
-    const env = opts.env ?? (process.env as Record<string, string | undefined>);
-    this.cliCommand = opts.cliCommand ?? env['GEMINI_CLI_COMMAND'] ?? 'gemini';
+    if (!opts.config.apiKey) {
+      throw new ProviderError('GoogleProvider requires GOOGLE_API_KEY', 'google');
+    }
+    if (!opts.config.models || opts.config.models.length === 0) {
+      throw new ProviderError(
+        'GoogleProvider: Nao ha modelos configurados em MODELS_GOOGLE no fzagent.conf',
+        'google',
+      );
+    }
+    this.models = opts.config.models;
+    this.genAI = new GoogleGenerativeAI(opts.config.apiKey);
   }
 
   async complete(messages: Message[], options: CompleteOptions): Promise<CompleteResult> {
-    const prompt = formatMessagesForCLI(messages, options.systemPrompt);
-    const useModel = this.models.includes(options.model) ? options.model : '';
-    const args = buildGeminiArgs(prompt, useModel);
     const start = Date.now();
+    const modelId: string = options.model || (this.models[0] as string);
 
-    const { stdout, stderr, exitCode } = await spawnCollect(this.cliCommand, args, options.signal);
+    const modelParams: ModelParams = { model: modelId };
+    if (options.systemPrompt) modelParams.systemInstruction = options.systemPrompt;
 
-    if (exitCode !== 0) {
+    const model = this.genAI.getGenerativeModel(modelParams);
+
+    const contents = messagesToGemini(messages);
+    const tools = options.tools ? [toolsToGemini(options.tools)] : undefined;
+    const nameMap = buildToolNameMap(options.tools);
+
+    const generationConfig: GenerationConfig = {};
+    if (options.maxTokens !== undefined) generationConfig.maxOutputTokens = options.maxTokens;
+    if (options.temperature !== undefined) generationConfig.temperature = options.temperature;
+    if (options.topP !== undefined) generationConfig.topP = options.topP;
+    if (options.stopSequences !== undefined) generationConfig.stopSequences = options.stopSequences;
+
+    const request: GenerateContentRequest = {
+      contents,
+      ...(tools && { tools }),
+      generationConfig,
+    };
+
+    try {
+      const result = await model.generateContent(request);
+      const response = result.response;
+      const candidates = response.candidates || [];
+      const firstCandidate = candidates[0];
+
+      if (!firstCandidate) {
+        throw new ProviderError('No candidates returned from Google', 'google');
+      }
+
+      const parts = firstCandidate.content.parts || [];
+      let content = '';
+      const toolCalls: ToolCall[] = [];
+
+      for (const part of parts) {
+        if (part.text) content += part.text;
+        if (part.functionCall) {
+          toolCalls.push({
+            id: 'call_' + Math.random().toString(36).substring(2, 9),
+            name: denormalizeToolName(part.functionCall.name, nameMap),
+            input: (part.functionCall.args as Record<string, unknown>) || {},
+          });
+        }
+      }
+
+      this.logger.debug(
+        {
+          model: modelId,
+          latencyMs: Date.now() - start,
+          toolCalls: toolCalls.length,
+        },
+        'google.complete ok',
+      );
+
+      return {
+        content,
+        toolCalls,
+        stopReason: geminiFinishReasonToOurs(firstCandidate.finishReason),
+        usage: {
+          inputTokens: response.usageMetadata?.promptTokenCount ?? 0,
+          outputTokens: response.usageMetadata?.candidatesTokenCount ?? 0,
+        },
+        model: modelId,
+        provider: 'google',
+      };
+    } catch (err) {
       throw new ProviderError(
-        `Gemini CLI exit ${exitCode}: ${stderr.trim() || 'no stderr'}`,
-        this.name,
+        `Google API Error: ${err instanceof Error ? err.message : String(err)}`,
+        'google',
       );
     }
-
-    const content = stdout.trim();
-    this.logger.debug(
-      { model: options.model, latencyMs: Date.now() - start, bytes: content.length },
-      'google.complete ok (CLI)',
-    );
-
-    return {
-      content,
-      toolCalls: [],
-      stopReason: 'end_turn' as StopReason,
-      // CLI nao reporta tokens. Approximacoes futuras podem usar tokenizer local.
-      usage: { inputTokens: 0, outputTokens: 0 },
-      model: options.model,
-      provider: 'google',
-    };
   }
 
   async *stream(messages: Message[], options: CompleteOptions): AsyncIterable<StreamChunk> {
-    const prompt = formatMessagesForCLI(messages, options.systemPrompt);
-    const useModel = this.models.includes(options.model) ? options.model : '';
-    const args = buildGeminiArgs(prompt, useModel);
+    const modelId: string = options.model || (this.models[0] as string);
 
-    const child = spawn(this.cliCommand, args, {
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
+    const modelParams: ModelParams = { model: modelId };
+    if (options.systemPrompt) modelParams.systemInstruction = options.systemPrompt;
 
-    const onAbort = (): void => {
-      child.kill('SIGTERM');
+    const model = this.genAI.getGenerativeModel(modelParams);
+
+    const contents = messagesToGemini(messages);
+    const tools = options.tools ? [toolsToGemini(options.tools)] : undefined;
+    const nameMap = buildToolNameMap(options.tools);
+
+    const generationConfig: GenerationConfig = {};
+    if (options.maxTokens !== undefined) generationConfig.maxOutputTokens = options.maxTokens;
+    if (options.temperature !== undefined) generationConfig.temperature = options.temperature;
+
+    const request: GenerateContentRequest = {
+      contents,
+      ...(tools && { tools }),
+      generationConfig,
     };
-    if (options.signal) {
-      if (options.signal.aborted) onAbort();
-      else options.signal.addEventListener('abort', onAbort, { once: true });
+
+    try {
+      const result = await model.generateContentStream(request);
+
+      for await (const chunk of result.stream) {
+        const parts = chunk.candidates?.[0]?.content.parts || [];
+        for (const part of parts) {
+          if (part.text) {
+            yield { type: 'text-delta', textDelta: part.text };
+          }
+          if (part.functionCall) {
+            const toolCallId = 'call_' + Math.random().toString(36).substring(2, 9);
+            yield {
+              type: 'tool-call-start',
+              toolCallId,
+              toolName: denormalizeToolName(part.functionCall.name, nameMap),
+            };
+            yield {
+              type: 'tool-call-end',
+              toolCallId,
+              input: (part.functionCall.args as Record<string, unknown>) || {},
+            };
+          }
+        }
+      }
+
+      const finalResponse = await result.response;
+      yield {
+        type: 'usage',
+        usage: {
+          inputTokens: finalResponse.usageMetadata?.promptTokenCount ?? 0,
+          outputTokens: finalResponse.usageMetadata?.candidatesTokenCount ?? 0,
+        },
+      };
+      yield { type: 'stop', stopReason: 'end_turn' };
+    } catch (err) {
+      throw new ProviderError(
+        `Google Stream Error: ${err instanceof Error ? err.message : String(err)}`,
+        'google',
+      );
+    }
+  }
+}
+
+// ---------- Helpers ----------
+
+function messagesToGemini(messages: Message[]): Content[] {
+  const contents: Content[] = [];
+
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i];
+    if (!msg || msg.role === 'system') continue;
+
+    const parts: Part[] = [];
+
+    if (msg.role === 'tool') {
+      // Procura o nome da ferramenta na mensagem anterior (que deve ser a do assistente com o tool_call)
+      let toolName = 'unknown';
+      for (let j = i - 1; j >= 0; j--) {
+        const prev = messages[j];
+        if (!prev) continue;
+        const tc = prev.tool_calls?.find((t) => t.id === msg.tool_call_id);
+        if (tc) {
+          toolName = tc.name;
+          break;
+        }
+      }
+
+      parts.push({
+        functionResponse: {
+          name: sanitizeToolName(toolName),
+          response: { result: msg.content },
+        },
+      });
+      contents.push({ role: 'function', parts });
+      continue;
     }
 
-    const decoder = new TextDecoder();
-    const stderrChunks: string[] = [];
-    child.stderr.on('data', (d: Buffer) => stderrChunks.push(decoder.decode(d)));
-
-    const queue: string[] = [];
-    let finished = false;
-    let error: Error | undefined;
-    let resolveNext: (() => void) | null = null;
-
-    child.stdout.on('data', (d: Buffer) => {
-      queue.push(decoder.decode(d));
-      resolveNext?.();
-      resolveNext = null;
-    });
-    child.on('error', (err) => {
-      error = err;
-      finished = true;
-      resolveNext?.();
-      resolveNext = null;
-    });
-    child.on('close', (code) => {
-      if (code !== 0 && !error) {
-        error = new ProviderError(
-          `Gemini CLI exit ${code}: ${stderrChunks.join('').trim()}`,
-          this.name,
-        );
-      }
-      finished = true;
-      resolveNext?.();
-      resolveNext = null;
-    });
-
-    while (true) {
-      if (queue.length > 0) {
-        const chunk = queue.shift()!;
-        if (chunk.length > 0) yield { type: 'text-delta', textDelta: chunk };
-      } else if (finished) {
-        if (error) throw error;
-        yield { type: 'usage', usage: { inputTokens: 0, outputTokens: 0 } };
-        yield { type: 'stop', stopReason: 'end_turn' };
-        return;
-      } else {
-        await new Promise<void>((r) => {
-          resolveNext = r;
+    if (msg.tool_calls) {
+      for (const tc of msg.tool_calls) {
+        parts.push({
+          functionCall: {
+            name: sanitizeToolName(tc.name),
+            args: (tc.input as Record<string, unknown>) || {},
+          },
         });
       }
     }
-  }
-}
 
-// ---------- helpers (exportados para teste) ----------
-
-export function formatMessagesForCLI(messages: Message[], systemHint?: string): string {
-  const parts: string[] = [];
-  if (systemHint !== undefined && systemHint.length > 0) {
-    parts.push(`[system]\n${systemHint}`);
-  }
-  for (const msg of messages) {
-    parts.push(`[${msg.role}]\n${msg.content}`);
-  }
-  return parts.join('\n\n');
-}
-
-export function buildGeminiArgs(prompt: string, model: string): string[] {
-  const args = ['-p', prompt];
-  if (model && model.length > 0) {
-    args.push('-m', model);
-  }
-  return args;
-}
-
-interface SpawnResult {
-  stdout: string;
-  stderr: string;
-  exitCode: number;
-}
-
-async function spawnCollect(
-  command: string,
-  args: string[],
-  signal?: AbortSignal,
-): Promise<SpawnResult> {
-  return new Promise<SpawnResult>((resolve, reject) => {
-    let child: ChildProcess;
-    try {
-      child = spawn(command, args, { stdio: ['ignore', 'pipe', 'pipe'] });
-    } catch (err) {
-      reject(err instanceof Error ? err : new Error(String(err)));
-      return;
+    if (msg.content) {
+      parts.push({ text: msg.content });
     }
 
-    let stdout = '';
-    let stderr = '';
-    child.stdout?.on('data', (d: Buffer) => (stdout += d.toString('utf8')));
-    child.stderr?.on('data', (d: Buffer) => (stderr += d.toString('utf8')));
-
-    const onAbort = (): void => {
-      child.kill('SIGTERM');
-    };
-    if (signal) {
-      if (signal.aborted) onAbort();
-      else signal.addEventListener('abort', onAbort, { once: true });
-    }
-
-    child.on('error', (err) => reject(err));
-    child.on('close', (code) => {
-      resolve({ stdout, stderr, exitCode: code ?? 0 });
+    contents.push({
+      role: msg.role === 'assistant' ? 'model' : 'user',
+      parts,
     });
-  });
+  }
+
+  return contents;
+}
+
+function toolsToGemini(tools: ToolDefinition[]): Tool {
+  return {
+    functionDeclarations: tools.map((t) => ({
+      name: sanitizeToolName(t.name),
+      description: t.description,
+      parameters: t.inputSchema as any,
+    })),
+  };
+}
+
+function geminiFinishReasonToOurs(reason: string | undefined): StopReason {
+  switch (reason) {
+    case 'STOP':
+      return 'end_turn';
+    case 'MAX_TOKENS':
+      return 'max_tokens';
+    case 'SAFETY':
+      return 'error';
+    default:
+      return 'end_turn';
+  }
 }

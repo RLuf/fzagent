@@ -50,6 +50,15 @@ export const FzagentConfSchema = z.object({
   AGENTIC_HEARTBEAT_INTERVAL: intStr(30000),
   AGENTIC_HISTORY_TURNS: intStr(200),
   AGENTIC_COMPACTION_THRESHOLD_PCT: intStr(80),
+  // FCC fix (Fractura de Coerencia Contextual) — reinjecao periodica da
+  // tarefa original a cada N iteracoes. Mitiga "lost in the middle".
+  AGENTIC_REINJECT_EVERY: intStr(5),
+  // Task pinning: tarefa aparece no TOPO e no fim do system prompt (sandwich).
+  // Desligavel para teste de regressao com comportamento legado.
+  AGENTIC_TASK_PINNING_ENABLED: boolStr(true),
+  // Compaction: quantas unidades atomicas (user solo OU assistant+tool_results)
+  // preservar intactas no fim ao comprimir o meio do historico. Sub-sessao 2.
+  AGENTIC_COMPACTION_KEEP_RECENT: intStr(4),
 
   GENAISRC_DIR: z.string().default('genaisrc'),
   SKILL_REGISTRY_SCAN_INTERVAL: intStr(60000),

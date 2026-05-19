@@ -148,7 +148,7 @@ tools
       console.error(pc.red(`tool nao encontrada: ${name}`));
       process.exit(1);
     }
-    const llmShape = rt.tools.toLLMTools().find((x) => x.name === name);
+    const llmShape = rt.tools.toLLMTools().find((x: any) => x.name === name);
     console.log(
       JSON.stringify(
         {
@@ -289,6 +289,135 @@ program
     rt.sessionStore.close();
   });
 
+// server
+const server = program.command('server').description('gerencia o servidor Web Central Command');
+
+server
+  .command('run', { isDefault: true })
+  .description('inicia o servidor em foreground (default)')
+  .option('-p, --port <port>', 'porta do servidor', '7331')
+  .option('-h, --host <host>', 'host do servidor', '0.0.0.0')
+  .action(async (opts: { port: string; host: string }) => {
+    const rt = await buildRuntime({ silent: true });
+    const { startServer } = await import('./server.js');
+    await startServer(rt, {
+      port: Number(opts.port),
+      host: opts.host,
+    });
+  });
+
+server
+  .command('install')
+  .description('instala o fzagent como um servico systemd (exige sudo)')
+  .action(async () => {
+    await handleServiceCommand('install');
+  });
+
+server
+  .command('uninstall')
+  .description('remove o servico systemd (exige sudo)')
+  .action(async () => {
+    await handleServiceCommand('uninstall');
+  });
+
+server
+  .command('start')
+  .description('inicia o servico via systemctl')
+  .action(async () => {
+    await handleServiceCommand('start');
+  });
+
+server
+  .command('stop')
+  .description('para o servico via systemctl')
+  .action(async () => {
+    await handleServiceCommand('stop');
+  });
+
+server
+  .command('status')
+  .description('mostra o status do servico no systemd')
+  .action(async () => {
+    await handleServiceCommand('status');
+  });
+
+async function handleServiceCommand(cmd: string) {
+  const { execSync } = await import('node:child_process');
+  const { readFileSync, writeFileSync, existsSync } = await import('node:fs');
+  const { join } = await import('node:path');
+  const os = await import('node:os');
+
+  const serviceName = 'fzagent.service';
+  const servicePath = `/etc/systemd/system/${serviceName}`;
+  const cwd = process.cwd();
+  const user = os.userInfo().username;
+
+  // Tenta localizar o binario/script fzagent.
+  // Se rodando via npx, usaremos o proprio node + path do cli.js compilado.
+  const nodeBin = process.execPath;
+  const scriptPath = resolve(here, 'cli.js');
+  const execCmd = `${nodeBin} ${scriptPath}`;
+
+  try {
+    switch (cmd) {
+      case 'install': {
+        console.log(pc.blue(`Instalando servico em ${servicePath}...`));
+        const rootDir = resolve(here, '../../..');
+        const templatePath = join(rootDir, 'scripts/fzagent.service.template');
+        if (!existsSync(templatePath)) {
+          throw new Error(`Template nao encontrado em ${templatePath}`);
+        }
+        const template = readFileSync(templatePath, 'utf-8');
+        const content = template
+          .replace('{{USER}}', user)
+          .replace('{{CWD}}', cwd)
+          .replace('{{EXEC_COMMAND}}', execCmd);
+
+        writeFileSync('/tmp/fzagent.service', content);
+        execSync(`sudo mv /tmp/fzagent.service ${servicePath}`);
+        execSync('sudo systemctl daemon-reload');
+        execSync(`sudo systemctl enable ${serviceName}`);
+        console.log(pc.green('Servico instalado e habilitado com sucesso!'));
+        console.log(pc.dim('Use: fzagent server start'));
+        break;
+      }
+
+      case 'uninstall':
+        console.log(pc.blue('Removendo servico...'));
+        execSync(`sudo systemctl stop ${serviceName} || true`);
+        execSync(`sudo systemctl disable ${serviceName} || true`);
+        execSync(`sudo rm ${servicePath}`);
+        execSync('sudo systemctl daemon-reload');
+        console.log(pc.green('Servico removido.'));
+        break;
+
+      case 'start':
+        console.log(pc.blue('Iniciando fzagent via systemctl...'));
+        execSync(`sudo systemctl start ${serviceName}`);
+        console.log(pc.green('Iniciado.'));
+        break;
+
+      case 'stop':
+        console.log(pc.blue('Parando fzagent via systemctl...'));
+        execSync(`sudo systemctl stop ${serviceName}`);
+        console.log(pc.green('Parado.'));
+        break;
+
+      case 'status':
+        try {
+          const out = execSync(`systemctl status ${serviceName}`, { encoding: 'utf-8' });
+          console.log(out);
+        } catch (err: any) {
+          console.log(err.stdout || 'Servico nao esta rodando ou nao instalado.');
+        }
+        break;
+    }
+  } catch (err: any) {
+    console.error(pc.red('Erro ao gerenciar servico:'), err.message);
+    if (err.stderr) console.error(pc.dim(err.stderr.toString()));
+  }
+}
+
 // fallback: prompt one-shot ou --cli
 program.action(async (prompt: string | undefined, opts: { cli?: boolean }) => {
   if (opts.cli) {
@@ -343,6 +472,23 @@ async function runAgentLoop(
         case 'aborted':
           console.log(pc.yellow('aborted'));
           break;
+        case 'context-reinjected':
+          console.log(
+            pc.dim(
+              `[lembrete] iter ${ev.iteration} tokens=${ev.tokensUsed} (+${ev.reminderTokens} reinjetados)`,
+            ),
+          );
+          break;
+        case 'compaction-triggered':
+          console.log(pc.yellow(`[compactando contexto... tokens=${ev.tokensBefore}]`));
+          break;
+        case 'compaction-completed':
+          console.log(
+            pc.green(
+              `[compactado: ${ev.messagesBefore}->${ev.messagesAfter} msgs, ~${ev.tokensSaved} tokens economizados]`,
+            ),
+          );
+          break;
         case 'end':
           console.log(
             pc.dim(
@@ -385,8 +531,9 @@ function maskSecrets(env: Record<string, unknown>): Record<string, unknown> {
   ];
   const out: Record<string, unknown> = { ...env };
   for (const k of SECRET_KEYS) {
-    if (typeof out[k] === 'string' && (out[k] as string).length > 0) {
-      out[k] = '***' + (out[k] as string).slice(-4);
+    const val = out[k];
+    if (typeof val === 'string' && val.length > 0) {
+      out[k] = '***' + val.slice(-4);
     }
   }
   return out;

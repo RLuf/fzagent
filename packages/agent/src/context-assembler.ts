@@ -1,14 +1,19 @@
 // Context Assembler — monta o system prompt em camadas, ao estilo
 // openclaw step 13 (multi-layer prompts), com camada extra de memoria (RAG).
 //
-// Camadas (ordem):
-//   1. Identity   — quem o agente e
-//   2. Personality— tom, restricoes (opcional)
-//   3. Safety     — guardrails (sempre presente)
-//   4. Bootstrap  — contexto operacional (workspace, tools)
-//   5. Memory     — RAG: top-k de cada collection Qdrant relevante a tarefa
-//   6. Runtime    — timestamp, agent_id, session_id, channel
+// Camadas (ordem) com task pinning sandwich (FCC fix):
+//   0. Tarefa atual (topo)     — se taskPinningEnabled (default true)
+//   1. Identity                — quem o agente e
+//   2. Personality             — tom, restricoes (opcional)
+//   3. Safety                  — guardrails (sempre presente)
+//   4. Bootstrap               — contexto operacional (workspace, tools)
+//   5. Tools disponiveis       — lista de tools + instrucao imperativa
+//   6. Memory (RAG)            — top-k de cada collection Qdrant
+//   7. Runtime                 — timestamp, agent_id, session_id, channel
+//   8. Tarefa atual (final)    — reforco no fim, sempre que `task` presente
 //
+// Sandwich: tarefa aparece em #0 e #8 simultaneamente quando pinning ON.
+// Mitiga "lost in the middle" (Liu et al 2023) — attention nas duas pontas.
 // A montagem acontece UMA vez por agent.run(); nao re-RAGea a cada iteracao.
 
 import type { FzagentLogger } from '@fzagent/core';
@@ -43,6 +48,9 @@ export interface AssembleInput {
   ragTopK?: number;
   tools: ToolRegistry;
   logger?: FzagentLogger;
+  // FCC fix — quando true (default), tarefa aparece no TOPO E no fim do
+  // system prompt (sandwich). Quando false, comportamento legado (so no fim).
+  taskPinningEnabled?: boolean;
 }
 
 const DEFAULT_SAFETY = `Voce nunca expoe credenciais. Voce nao executa comandos destrutivos sem confirmacao explicita do usuario. Quando estiver inseguro, peca esclarecimento.`;
@@ -66,6 +74,15 @@ Para instalar dependencias de scripts Python ad-hoc gerados pelo proprio agente:
 
 export async function assembleSystemPrompt(input: AssembleInput): Promise<string> {
   const parts: string[] = [];
+  const taskPinningEnabled = input.taskPinningEnabled ?? true;
+
+  // 0. Tarefa atual (topo) — sandwich FCC fix.
+  // Aparece no topo apos toggle (default ON). Bloco final no fim reforca.
+  if (taskPinningEnabled && input.task) {
+    parts.push(
+      `# Tarefa atual (referencia primaria)\n${input.task}\n\nMantenha este objetivo em mente em todas as iteracoes. A descricao completa aparece tambem no fim deste prompt como reforco.`,
+    );
+  }
 
   // 1. Identity
   parts.push(`# Identity\nVoce e ${input.identity.name}. ${input.identity.description}`);

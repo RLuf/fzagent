@@ -41,7 +41,23 @@ export type AgentEvent =
     }
   | { type: 'circuit-breaker-tripped'; failures: number }
   | { type: 'aborted' }
-  | { type: 'end'; stopReason: string; iterations: number; tokensUsed: number };
+  | { type: 'end'; stopReason: string; iterations: number; tokensUsed: number }
+  // FCC fix — reinjecao periodica da tarefa para mitigar dilucao de atencao.
+  | {
+      type: 'context-reinjected';
+      iteration: number;
+      tokensUsed: number;
+      reminderTokens: number;
+    }
+  // Compaction LLM (sub-sessao 2 do plano FCC). Eventos declarados ja para
+  // observability futura; emissao implementada em sub-sessao 2.
+  | { type: 'compaction-triggered'; reason: 'token-threshold'; tokensBefore: number }
+  | {
+      type: 'compaction-completed';
+      messagesBefore: number;
+      messagesAfter: number;
+      tokensSaved: number;
+    };
 
 export interface AgentRunConfig {
   maxIterations: number;
@@ -49,6 +65,13 @@ export interface AgentRunConfig {
   circuitBreakerMaxFailures: number;
   circuitBreakerCooldownMs: number;
   defaultModel: string;
+  // FCC fix — opcionais, defaults seguros (legacy off) quando ausentes.
+  // Factory sempre passa explicitamente em producao; tests podem omitir.
+  historyTurns?: number;
+  compactionThresholdPct?: number;
+  reinjectEvery?: number;
+  taskPinningEnabled?: boolean;
+  compactionKeepRecent?: number;
 }
 
 export interface AgentOptions {
@@ -101,6 +124,11 @@ export class Agent {
       messages.push(userMsg);
       this.opts.sessionStore.recordTurn(session.id, userMsg);
     }
+    // FCC fix — captura o index da tarefa "ancora" NO MOMENTO do push.
+    // Necessario porque input.history pode pre-popular messages com user msgs
+    // anteriores; tarefa nao eh sempre index 0. Compaction (sub-sessao 2) usa
+    // para preservar a tarefa ao comprimir o meio do historico.
+    const _taskMessageIndex = messages.length - 1;
 
     const systemPrompt = await assembleSystemPrompt({
       ...this.opts.contextLayers,
@@ -108,6 +136,9 @@ export class Agent {
       sessionId: session.id,
       task: input.task,
       tools: this.opts.tools,
+      ...(this.opts.config.taskPinningEnabled !== undefined && {
+        taskPinningEnabled: this.opts.config.taskPinningEnabled,
+      }),
       ...(input.channel !== undefined && { channel: input.channel }),
       ...(this.opts.logger !== undefined && { logger: this.opts.logger }),
     });
@@ -180,6 +211,39 @@ export class Agent {
         tokensUsed,
       });
       yield { type: 'thinking' };
+
+      // FCC fix — reinjecao periodica da tarefa. A cada N iteracoes (config
+      // AGENTIC_REINJECT_EVERY, default 5), injeta mensagem user sintetica
+      // lembrando o objetivo, posicao atual e orcamento. Mitiga "lost in the
+      // middle" reforcando a task imediatamente antes da chamada LLM.
+      // Skip iter=1 (a tarefa acabou de ser pushada, redundante).
+      // Default legacy (sem reinjecao) quando config.reinjectEvery undefined.
+      const reinjectEvery = this.opts.config.reinjectEvery ?? 0;
+      if (reinjectEvery > 0 && iter > 1 && iter % reinjectEvery === 0) {
+        const reminder = `[LEMBRETE] Tarefa original: ${input.task}. Iteracao ${iter}/${this.opts.config.maxIterations}. Tokens usados: ${tokensUsed}/${this.opts.config.tokenBudget}. Mantenha o foco no objetivo acima.`;
+        const reminderMsg: Message = {
+          role: 'user',
+          content: reminder,
+          timestamp: Date.now(),
+        };
+        messages.push(reminderMsg);
+        this.opts.sessionStore.recordTurn(session.id, reminderMsg);
+        // Estimativa grosseira de tokens do reminder (~4 chars/token).
+        const reminderTokens = Math.ceil(reminder.length / 4);
+        this.opts.eventBus?.emit('agent.context-reinjected', {
+          agentId: this.opts.agentId,
+          sessionId: session.id,
+          iteration: iter,
+          tokensUsed,
+          reminderTokens,
+        });
+        yield {
+          type: 'context-reinjected',
+          iteration: iter,
+          tokensUsed,
+          reminderTokens,
+        };
+      }
 
       const completeOpts: CompleteOptions = {
         model: input.model ?? this.opts.config.defaultModel,

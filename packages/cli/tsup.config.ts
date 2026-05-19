@@ -27,5 +27,8 @@ export default defineConfig({
     'commander',
     'picocolors',
     'better-sqlite3',
+    'express',
+    'socket.io',
+    'cors',
   ],
 });

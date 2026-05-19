@@ -108,9 +108,15 @@ describe('checkProviderAvailable', () => {
     expect(checkProviderAvailable('openrouter', { OPENROUTER_API_KEY: 'sk-or-x' })).toBe(true);
   });
 
-  it('ollama and google always available (CLI/local)', () => {
+  it('ollama always available (local, sem credencial)', () => {
     expect(checkProviderAvailable('ollama', {})).toBe(true);
-    expect(checkProviderAvailable('google', {})).toBe(true);
+  });
+
+  // Google passou de CLI subprocess para SDK direto em 2026-05-13 — agora
+  // exige GOOGLE_API_KEY como qualquer provider via API.
+  it('google requires GOOGLE_API_KEY (SDK-based desde 2026-05-13)', () => {
+    expect(checkProviderAvailable('google', {})).toBe(false);
+    expect(checkProviderAvailable('google', { GOOGLE_API_KEY: 'fake-key' })).toBe(true);
   });
 });
 

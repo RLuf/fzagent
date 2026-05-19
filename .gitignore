@@ -69,3 +69,11 @@ minhoquinha_game.py
 
 # Claude Code worktrees temporarias
 .claude/worktrees/
+
+# backups e snapshots locais (nao versionar)
+*.bak
+*.old
+node_modules_old/
+
+# notas pessoais e rascunhos
+projeto.txt

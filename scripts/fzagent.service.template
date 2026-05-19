@@ -1,0 +1,14 @@
+[Unit]
+Description=fzagent Central Command Service
+After=network.target
+
+[Service]
+Type=simple
+User={{USER}}
+WorkingDirectory={{CWD}}
+ExecStart={{EXEC_COMMAND}} server
+Restart=always
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

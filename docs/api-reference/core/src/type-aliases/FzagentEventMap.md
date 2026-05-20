@@ -52,6 +52,82 @@ Defined in: core/src/events/index.ts:32
 
 ---
 
+### agent.compaction-completed
+
+> **agent.compaction-completed**: `object`
+
+Defined in: core/src/events/index.ts:50
+
+#### agentId
+
+> **agentId**: `string`
+
+#### messagesAfter
+
+> **messagesAfter**: `number`
+
+#### messagesBefore
+
+> **messagesBefore**: `number`
+
+#### sessionId
+
+> **sessionId**: `string`
+
+#### tokensSaved
+
+> **tokensSaved**: `number`
+
+---
+
+### agent.compaction-triggered
+
+> **agent.compaction-triggered**: `object`
+
+Defined in: core/src/events/index.ts:45
+
+#### agentId
+
+> **agentId**: `string`
+
+#### sessionId
+
+> **sessionId**: `string`
+
+#### tokensBefore
+
+> **tokensBefore**: `number`
+
+---
+
+### agent.context-reinjected
+
+> **agent.context-reinjected**: `object`
+
+Defined in: core/src/events/index.ts:38
+
+#### agentId
+
+> **agentId**: `string`
+
+#### iteration
+
+> **iteration**: `number`
+
+#### reminderTokens
+
+> **reminderTokens**: `number`
+
+#### sessionId
+
+> **sessionId**: `string`
+
+#### tokensUsed
+
+> **tokensUsed**: `number`
+
+---
+
 ### agent.iteration
 
 > **agent.iteration**: `object`
@@ -164,7 +240,7 @@ Defined in: core/src/events/index.ts:15
 
 > **heartbeat.tick**: `object`
 
-Defined in: core/src/events/index.ts:42
+Defined in: core/src/events/index.ts:62
 
 #### heapUsedMb
 
@@ -180,7 +256,7 @@ Defined in: core/src/events/index.ts:42
 
 > **provider.failure**: `object`
 
-Defined in: core/src/events/index.ts:37
+Defined in: core/src/events/index.ts:57
 
 #### error
 
@@ -200,7 +276,7 @@ Defined in: core/src/events/index.ts:37
 
 > **provider.success**: `object`
 
-Defined in: core/src/events/index.ts:38
+Defined in: core/src/events/index.ts:58
 
 #### latencyMs
 
@@ -216,7 +292,7 @@ Defined in: core/src/events/index.ts:38
 
 > **skill.invoked**: `object`
 
-Defined in: core/src/events/index.ts:41
+Defined in: core/src/events/index.ts:61
 
 #### durationMs
 
@@ -236,7 +312,7 @@ Defined in: core/src/events/index.ts:41
 
 > **wiki.ingest**: [`IngestEvent`](IngestEvent.md)
 
-Defined in: core/src/events/index.ts:39
+Defined in: core/src/events/index.ts:59
 
 ---
 
@@ -244,4 +320,4 @@ Defined in: core/src/events/index.ts:39
 
 > **wiki.query**: [`QueryEvent`](QueryEvent.md)
 
-Defined in: core/src/events/index.ts:40
+Defined in: core/src/events/index.ts:60

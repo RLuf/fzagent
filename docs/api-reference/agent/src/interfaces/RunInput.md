@@ -6,7 +6,7 @@
 
 # Interface: RunInput
 
-Defined in: agent/src/agent.ts:73
+Defined in: agent/src/agent.ts:96
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: agent/src/agent.ts:73
 
 > `optional` **channel?**: `string`
 
-Defined in: agent/src/agent.ts:80
+Defined in: agent/src/agent.ts:103
 
 ---
 
@@ -22,7 +22,7 @@ Defined in: agent/src/agent.ts:80
 
 > `optional` **history?**: `object`[]
 
-Defined in: agent/src/agent.ts:76
+Defined in: agent/src/agent.ts:99
 
 ---
 
@@ -30,7 +30,7 @@ Defined in: agent/src/agent.ts:76
 
 > `optional` **model?**: `string`
 
-Defined in: agent/src/agent.ts:79
+Defined in: agent/src/agent.ts:102
 
 ---
 
@@ -38,7 +38,7 @@ Defined in: agent/src/agent.ts:79
 
 > `optional` **signal?**: `AbortSignal`
 
-Defined in: agent/src/agent.ts:77
+Defined in: agent/src/agent.ts:100
 
 ---
 
@@ -46,4 +46,4 @@ Defined in: agent/src/agent.ts:77
 
 > **task**: `string`
 
-Defined in: agent/src/agent.ts:74
+Defined in: agent/src/agent.ts:97

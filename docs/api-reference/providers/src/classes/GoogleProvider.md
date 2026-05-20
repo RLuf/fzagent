@@ -6,7 +6,7 @@
 
 # Class: GoogleProvider
 
-Defined in: providers/src/adapters/google.ts:33
+Defined in: providers/src/adapters/google.ts:34
 
 ## Extends
 
@@ -18,13 +18,13 @@ Defined in: providers/src/adapters/google.ts:33
 
 > **new GoogleProvider**(`opts`): `GoogleProvider`
 
-Defined in: providers/src/adapters/google.ts:41
+Defined in: providers/src/adapters/google.ts:40
 
 #### Parameters
 
 ##### opts
 
-`GoogleAdapterOptions`
+[`BaseProviderOptions`](../interfaces/BaseProviderOptions.md)
 
 #### Returns
 
@@ -76,7 +76,7 @@ Defined in: providers/src/base.ts:26
 
 > `readonly` **models**: readonly `string`[]
 
-Defined in: providers/src/adapters/google.ts:35
+Defined in: providers/src/adapters/google.ts:36
 
 #### Overrides
 
@@ -88,7 +88,7 @@ Defined in: providers/src/adapters/google.ts:35
 
 > `readonly` **name**: `"google"`
 
-Defined in: providers/src/adapters/google.ts:34
+Defined in: providers/src/adapters/google.ts:35
 
 #### Overrides
 
@@ -98,9 +98,9 @@ Defined in: providers/src/adapters/google.ts:34
 
 ### supportsTools
 
-> `readonly` **supportsTools**: `false` = `false`
+> `readonly` **supportsTools**: `true` = `true`
 
-Defined in: providers/src/adapters/google.ts:38
+Defined in: providers/src/adapters/google.ts:37
 
 #### Overrides
 
@@ -112,7 +112,7 @@ Defined in: providers/src/adapters/google.ts:38
 
 > **complete**(`messages`, `options`): `Promise`\<[`CompleteResult`](../interfaces/CompleteResult.md)\>
 
-Defined in: providers/src/adapters/google.ts:48
+Defined in: providers/src/adapters/google.ts:55
 
 #### Parameters
 
@@ -138,7 +138,7 @@ Defined in: providers/src/adapters/google.ts:48
 
 > **stream**(`messages`, `options`): `AsyncIterable`\<[`StreamChunk`](../type-aliases/StreamChunk.md)\>
 
-Defined in: providers/src/adapters/google.ts:80
+Defined in: providers/src/adapters/google.ts:133
 
 #### Parameters
 

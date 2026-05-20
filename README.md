@@ -36,14 +36,14 @@ de Andrej Karpathy, com indexador SQLite + FTS5 e busca vetorial via Qdrant.
 - **Server HTTP + WebSocket**: Express 5 + Socket.io expoem REST (health, log tail) e namespace `/ws` para stream de eventos do agente.
 - **Web UI experimental** (`packages/web-ui`): Vite 8 + React 19 + Tailwind + Zustand consumindo o `/ws`.
 - **CLI ergonomico**: `fzagent "<prompt>"`, `fzagent --cli` (interativo), `fzagent agent loop "<task>"`, `fzagent wiki ingest`, `fzagent skill list/describe`.
-- **Logging dual sink**: console (pino-pretty) + arquivo JSON estruturado quando `LOG_FILE=<path>`; mkdir on-demand.
+- **Logging dual sink com split de levels**: console (pino-pretty) + arquivo JSON estruturado (`LOG_FILE`); cada sink com seu proprio level via `LOG_LEVEL_CONSOLE` e `LOG_LEVEL_FILE` (console silent + arquivo debug eh receita comum).
 - **API reference auto-gerada** (`docs/api-reference/`) via TypeDoc + plugin markdown.
 
 ## Stack
 
 | Camada       | Tecnologia                    |
 | ------------ | ----------------------------- |
-| Runtime      | Node 18+ ESM puro             |
+| Runtime      | Node 22 LTS ESM puro          |
 | Linguagem    | TypeScript 5.6 estrito        |
 | Validacao    | Zod                           |
 | Logger       | pino                          |

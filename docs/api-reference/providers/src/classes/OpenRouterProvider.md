@@ -124,7 +124,7 @@ Defined in: providers/src/base.ts:23
 
 > **complete**(`messages`, `options`): `Promise`\<[`CompleteResult`](../interfaces/CompleteResult.md)\>
 
-Defined in: providers/src/adapters/openai.ts:35
+Defined in: providers/src/adapters/openai.ts:36
 
 #### Parameters
 
@@ -186,7 +186,7 @@ Defined in: providers/src/adapters/openrouter.ts:81
 
 > **stream**(`messages`, `options`): `AsyncIterable`\<[`StreamChunk`](../type-aliases/StreamChunk.md)\>
 
-Defined in: providers/src/adapters/openai.ts:98
+Defined in: providers/src/adapters/openai.ts:105
 
 #### Parameters
 

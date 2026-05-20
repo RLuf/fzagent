@@ -8,7 +8,7 @@
 
 > **buildAgent**(`runtime`, `agentId?`): `Agent`
 
-Defined in: cli/src/factory.ts:245
+Defined in: cli/src/factory.ts:267
 
 ## Parameters
 

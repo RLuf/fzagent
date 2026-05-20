@@ -6,7 +6,7 @@
 
 # Interface: FzagentEventBus
 
-Defined in: core/src/events/index.ts:55
+Defined in: core/src/events/index.ts:75
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: core/src/events/index.ts:55
 
 > `readonly` **all**: `Map`\<keyof FzagentEventMap \| `"*"`, ([`EventHandler`](../type-aliases/EventHandler.md)\<`unknown`\> \| [`WildcardHandler`](../type-aliases/WildcardHandler.md)\<[`FzagentEventMap`](../type-aliases/FzagentEventMap.md)\>)[]\>
 
-Defined in: core/src/events/index.ts:56
+Defined in: core/src/events/index.ts:76
 
 ## Methods
 
@@ -22,7 +22,7 @@ Defined in: core/src/events/index.ts:56
 
 > **clear**(): `void`
 
-Defined in: core/src/events/index.ts:65
+Defined in: core/src/events/index.ts:85
 
 #### Returns
 
@@ -34,7 +34,7 @@ Defined in: core/src/events/index.ts:65
 
 > **emit**\<`K`\>(`event`, `payload`): `void`
 
-Defined in: core/src/events/index.ts:64
+Defined in: core/src/events/index.ts:84
 
 #### Type Parameters
 
@@ -64,7 +64,7 @@ Defined in: core/src/events/index.ts:64
 
 > **off**\<`K`\>(`event`, `handler`): `void`
 
-Defined in: core/src/events/index.ts:62
+Defined in: core/src/events/index.ts:82
 
 ##### Type Parameters
 
@@ -90,7 +90,7 @@ Defined in: core/src/events/index.ts:62
 
 > **off**(`event`, `handler`): `void`
 
-Defined in: core/src/events/index.ts:63
+Defined in: core/src/events/index.ts:83
 
 ##### Parameters
 
@@ -114,7 +114,7 @@ Defined in: core/src/events/index.ts:63
 
 > **on**\<`K`\>(`event`, `handler`): `void`
 
-Defined in: core/src/events/index.ts:60
+Defined in: core/src/events/index.ts:80
 
 ##### Type Parameters
 
@@ -140,7 +140,7 @@ Defined in: core/src/events/index.ts:60
 
 > **on**(`event`, `handler`): `void`
 
-Defined in: core/src/events/index.ts:61
+Defined in: core/src/events/index.ts:81
 
 ##### Parameters
 

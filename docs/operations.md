@@ -38,6 +38,8 @@ Ambos os arquivos sao gitignored:
 | `QDRANT_API_KEY`          | —                            | Opcional (Qdrant local sem auth) |
 | `OLLAMA_BASE_URL`         | `http://192.168.0.101:11434` | papaimach                        |
 | `LOG_LEVEL`               | —                            | Override do conf (opcional)      |
+| `LOG_LEVEL_CONSOLE`       | —                            | Override do conf, sink console   |
+| `LOG_LEVEL_FILE`          | —                            | Override do conf, sink arquivo   |
 | `LOG_FORMAT`              | —                            | Override do conf (opcional)      |
 | `LOG_FILE`                | —                            | Override do conf (opcional)      |
 
@@ -54,7 +56,7 @@ Sessoes principais:
 **Agentic loop**:
 
 - `AGENTIC_MAX_ITERATIONS` (20) — max iters por `agent.run()`
-- `AGENTIC_TOKEN_BUDGET` (100000) — budget de tokens por sessao
+- `AGENTIC_TOKEN_BUDGET` (200000) — budget de tokens por sessao
 - `AGENTIC_CIRCUIT_BREAKER_MAX_FAILURES` (3)
 - `AGENTIC_CIRCUIT_BREAKER_COOLDOWN_MS` (30000)
 
@@ -76,6 +78,8 @@ Sessoes principais:
 **Logging**:
 
 - `LOG_LEVEL` (`info`) — vocabulario: `verbose` | `debug` | `info` | `silent`
+- `LOG_LEVEL_CONSOLE` (vazio = herda LOG_LEVEL) — override do level do sink console
+- `LOG_LEVEL_FILE` (vazio = herda LOG_LEVEL) — override do level do sink arquivo
 - `LOG_FORMAT` (`pretty`) — `pretty` | `json` | `silent`
 - `LOG_FILE` (vazio) — quando setado, dual sink (console + JSON file)
 
@@ -169,8 +173,19 @@ Quando `LOG_FILE` setado, o logger usa transport com multiplos targets:
 
 ```
 LOG_FORMAT=pretty + LOG_FILE=fzagent.log
-  ├─► stdout/stderr (pino-pretty, colorido)
-  └─► fzagent.log   (pino/file, JSON estruturado)
+  ├─► stdout/stderr (pino-pretty, colorido)        — usa LOG_LEVEL_CONSOLE
+  └─► fzagent.log   (pino/file, JSON estruturado)  — usa LOG_LEVEL_FILE
+```
+
+Cada sink pode ter seu proprio level (override via `LOG_LEVEL_CONSOLE`
+e `LOG_LEVEL_FILE`). Quando ausentes, herdam `LOG_LEVEL`. Receita comum:
+console quieto + arquivo verboso para forensics.
+
+```
+LOG_LEVEL=info
+LOG_LEVEL_CONSOLE=silent
+LOG_LEVEL_FILE=debug
+LOG_FILE=/tmp/fzagent.log
 ```
 
 Diretorio do `LOG_FILE` eh criado automaticamente. Path relativo eh

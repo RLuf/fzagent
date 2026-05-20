@@ -6,7 +6,7 @@
 
 # Interface: AssembleInput
 
-Defined in: agent/src/context-assembler.ts:33
+Defined in: agent/src/context-assembler.ts:38
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: agent/src/context-assembler.ts:33
 
 > **agentId**: `string`
 
-Defined in: agent/src/context-assembler.ts:39
+Defined in: agent/src/context-assembler.ts:44
 
 ---
 
@@ -22,7 +22,7 @@ Defined in: agent/src/context-assembler.ts:39
 
 > `optional` **bootstrap?**: `string`
 
-Defined in: agent/src/context-assembler.ts:37
+Defined in: agent/src/context-assembler.ts:42
 
 ---
 
@@ -30,7 +30,7 @@ Defined in: agent/src/context-assembler.ts:37
 
 > `optional` **channel?**: `string`
 
-Defined in: agent/src/context-assembler.ts:41
+Defined in: agent/src/context-assembler.ts:46
 
 ---
 
@@ -38,7 +38,7 @@ Defined in: agent/src/context-assembler.ts:41
 
 > **identity**: [`IdentityLayer`](IdentityLayer.md)
 
-Defined in: agent/src/context-assembler.ts:34
+Defined in: agent/src/context-assembler.ts:39
 
 ---
 
@@ -46,7 +46,7 @@ Defined in: agent/src/context-assembler.ts:34
 
 > `optional` **logger?**: `FzagentLogger`
 
-Defined in: agent/src/context-assembler.ts:45
+Defined in: agent/src/context-assembler.ts:50
 
 ---
 
@@ -54,7 +54,7 @@ Defined in: agent/src/context-assembler.ts:45
 
 > `optional` **personality?**: [`PersonalityLayer`](PersonalityLayer.md)
 
-Defined in: agent/src/context-assembler.ts:35
+Defined in: agent/src/context-assembler.ts:40
 
 ---
 
@@ -62,7 +62,7 @@ Defined in: agent/src/context-assembler.ts:35
 
 > `optional` **ragSources?**: [`RAGSource`](RAGSource.md)[]
 
-Defined in: agent/src/context-assembler.ts:42
+Defined in: agent/src/context-assembler.ts:47
 
 ---
 
@@ -70,7 +70,7 @@ Defined in: agent/src/context-assembler.ts:42
 
 > `optional` **ragTopK?**: `number`
 
-Defined in: agent/src/context-assembler.ts:43
+Defined in: agent/src/context-assembler.ts:48
 
 ---
 
@@ -78,7 +78,7 @@ Defined in: agent/src/context-assembler.ts:43
 
 > `optional` **safety?**: `string`
 
-Defined in: agent/src/context-assembler.ts:36
+Defined in: agent/src/context-assembler.ts:41
 
 ---
 
@@ -86,7 +86,7 @@ Defined in: agent/src/context-assembler.ts:36
 
 > **sessionId**: `string`
 
-Defined in: agent/src/context-assembler.ts:40
+Defined in: agent/src/context-assembler.ts:45
 
 ---
 
@@ -94,7 +94,15 @@ Defined in: agent/src/context-assembler.ts:40
 
 > `optional` **task?**: `string`
 
-Defined in: agent/src/context-assembler.ts:38
+Defined in: agent/src/context-assembler.ts:43
+
+---
+
+### taskPinningEnabled?
+
+> `optional` **taskPinningEnabled?**: `boolean`
+
+Defined in: agent/src/context-assembler.ts:53
 
 ---
 
@@ -102,4 +110,4 @@ Defined in: agent/src/context-assembler.ts:38
 
 > **tools**: [`ToolRegistry`](../classes/ToolRegistry.md)
 
-Defined in: agent/src/context-assembler.ts:44
+Defined in: agent/src/context-assembler.ts:49

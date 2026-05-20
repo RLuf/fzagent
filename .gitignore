@@ -77,3 +77,7 @@ node_modules_old/
 
 # notas pessoais e rascunhos
 projeto.txt
+
+# arquivo morto: em vez de apagar arquivos/pastas, mover para archived/
+# preserva historico local sem poluir o repositorio.
+archived/

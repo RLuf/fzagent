@@ -14,6 +14,10 @@ export type LogFormat = 'pretty' | 'json' | 'silent';
 
 export interface LoggerConfig {
   level?: string;
+  // Override de level por sink (dual sink). Quando ausente, herda `level`.
+  // Permite console silent + arquivo debug (e vice-versa).
+  consoleLevel?: string;
+  fileLevel?: string;
   format?: LogFormat;
   bindings?: Record<string, unknown>;
   destination?: DestinationStream;
@@ -29,18 +33,45 @@ function normalizeLevel(level: string): string {
   return level;
 }
 
+// Ordem do pino (do mais verboso para o mais restritivo). Usado para
+// escolher o root level no dual sink quando console e file tem niveis
+// distintos — o root precisa ser o mais permissivo, senao o sink mais
+// verboso fica capado.
+const PINO_ORDER: Record<string, number> = {
+  trace: 10,
+  debug: 20,
+  info: 30,
+  warn: 40,
+  error: 50,
+  fatal: 60,
+  silent: 70,
+};
+
+function mostPermissive(a: string, b: string): string {
+  const oa = PINO_ORDER[a] ?? PINO_ORDER['info'] ?? 30;
+  const ob = PINO_ORDER[b] ?? PINO_ORDER['info'] ?? 30;
+  return oa <= ob ? a : b;
+}
+
 export function createLogger(config: LoggerConfig = {}): FzagentLogger {
   const envLevel = process.env['LOG_LEVEL'];
   const envFormat = process.env['LOG_FORMAT'] as LogFormat | undefined;
   const envFile = process.env['LOG_FILE'];
 
+  const envConsole = process.env['LOG_LEVEL_CONSOLE'];
+  const envFile2 = process.env['LOG_LEVEL_FILE'];
   const rawLevel = config.level ?? envLevel ?? 'info';
-  const level = normalizeLevel(rawLevel);
+  // Pino exige um level "root" — usamos o mais permissivo entre console e
+  // file para deixar o filtro fino acontecer nos targets.
+  const consoleLevel = normalizeLevel(config.consoleLevel ?? envConsole ?? rawLevel);
+  const fileLevel = normalizeLevel(config.fileLevel ?? envFile2 ?? rawLevel);
   const format = config.format ?? envFormat ?? 'pretty';
   const filePath = config.filePath ?? envFile;
 
+  // Pino aceita 'silent' como sentinela para nao emitir nada — manter como esta.
+  const rootLevel = format === 'silent' ? 'silent' : mostPermissive(consoleLevel, fileLevel);
   const opts: LoggerOptions = {
-    level: format === 'silent' ? 'silent' : level,
+    level: rootLevel,
     base: config.bindings ?? null,
     timestamp: pino.stdTimeFunctions.isoTime,
   };
@@ -62,12 +93,12 @@ export function createLogger(config: LoggerConfig = {}): FzagentLogger {
               translateTime: 'HH:MM:ss.l',
               destination: 1,
             },
-            level: opts.level as string,
+            level: consoleLevel,
           }
         : {
             target: 'pino/file',
             options: { destination: 1 },
-            level: opts.level as string,
+            level: consoleLevel,
           };
     return pino({
       ...opts,
@@ -77,7 +108,7 @@ export function createLogger(config: LoggerConfig = {}): FzagentLogger {
           {
             target: 'pino/file',
             options: { destination: filePath, mkdir: true },
-            level: opts.level as string,
+            level: fileLevel,
           },
         ],
       },

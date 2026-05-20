@@ -8,4 +8,4 @@
 
 > **FzagentLogger** = `Logger`
 
-Defined in: core/src/logger/index.ts:25
+Defined in: core/src/logger/index.ts:29

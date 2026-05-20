@@ -105,6 +105,10 @@ export const FzagentConfSchema = z.object({
   //   - info:    eventos operacionais normais (default)
   //   - silent:  nada
   LOG_LEVEL: z.string().default('info'),
+  // Override por sink. Vazio = herda LOG_LEVEL para ambos. Permite
+  // console silencioso com arquivo verboso (e vice-versa).
+  LOG_LEVEL_CONSOLE: z.string().optional(),
+  LOG_LEVEL_FILE: z.string().optional(),
   LOG_FORMAT: z.enum(['pretty', 'json', 'silent']).default('pretty'),
   // LOG_FILE: caminho relativo ao cwd OU absoluto. Vazio = console-only.
   // Quando setado, escreve em arquivo JSON estruturado ADEMAIS do console.
@@ -147,6 +151,8 @@ export const EnvSchema = z
     BRAVE_SEARCH_API_KEY: z.string().optional(),
     // Logs — override do conf (env tem precedencia, mas defaults vivem no conf).
     LOG_LEVEL: z.string().optional(),
+    LOG_LEVEL_CONSOLE: z.string().optional(),
+    LOG_LEVEL_FILE: z.string().optional(),
     LOG_FORMAT: z.enum(['pretty', 'json', 'silent']).optional(),
     LOG_FILE: z.string().optional(),
   })

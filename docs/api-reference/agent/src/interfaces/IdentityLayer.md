@@ -6,7 +6,7 @@
 
 # Interface: IdentityLayer
 
-Defined in: agent/src/context-assembler.ts:18
+Defined in: agent/src/context-assembler.ts:23
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: agent/src/context-assembler.ts:18
 
 > **description**: `string`
 
-Defined in: agent/src/context-assembler.ts:20
+Defined in: agent/src/context-assembler.ts:25
 
 ---
 
@@ -22,4 +22,4 @@ Defined in: agent/src/context-assembler.ts:20
 
 > **name**: `string`
 
-Defined in: agent/src/context-assembler.ts:19
+Defined in: agent/src/context-assembler.ts:24

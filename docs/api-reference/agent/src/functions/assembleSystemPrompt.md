@@ -8,7 +8,7 @@
 
 > **assembleSystemPrompt**(`input`): `Promise`\<`string`\>
 
-Defined in: agent/src/context-assembler.ts:50
+Defined in: agent/src/context-assembler.ts:75
 
 ## Parameters
 

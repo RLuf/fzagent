@@ -6,7 +6,7 @@
 
 # Class: AnthropicProvider
 
-Defined in: providers/src/adapters/anthropic.ts:99
+Defined in: providers/src/adapters/anthropic.ts:100
 
 ## Extends
 
@@ -18,7 +18,7 @@ Defined in: providers/src/adapters/anthropic.ts:99
 
 > **new AnthropicProvider**(`opts`): `AnthropicProvider`
 
-Defined in: providers/src/adapters/anthropic.ts:105
+Defined in: providers/src/adapters/anthropic.ts:106
 
 #### Parameters
 
@@ -76,7 +76,7 @@ Defined in: providers/src/base.ts:26
 
 > `readonly` **models**: readonly `string`[]
 
-Defined in: providers/src/adapters/anthropic.ts:101
+Defined in: providers/src/adapters/anthropic.ts:102
 
 #### Overrides
 
@@ -88,7 +88,7 @@ Defined in: providers/src/adapters/anthropic.ts:101
 
 > `readonly` **name**: `"anthropic"`
 
-Defined in: providers/src/adapters/anthropic.ts:100
+Defined in: providers/src/adapters/anthropic.ts:101
 
 #### Overrides
 
@@ -112,7 +112,7 @@ Defined in: providers/src/base.ts:23
 
 > **complete**(`messages`, `options`): `Promise`\<[`CompleteResult`](../interfaces/CompleteResult.md)\>
 
-Defined in: providers/src/adapters/anthropic.ts:120
+Defined in: providers/src/adapters/anthropic.ts:121
 
 #### Parameters
 
@@ -138,7 +138,7 @@ Defined in: providers/src/adapters/anthropic.ts:120
 
 > **stream**(`messages`, `options`): `AsyncIterable`\<[`StreamChunk`](../type-aliases/StreamChunk.md)\>
 
-Defined in: providers/src/adapters/anthropic.ts:188
+Defined in: providers/src/adapters/anthropic.ts:191
 
 #### Parameters
 

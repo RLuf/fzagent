@@ -63,9 +63,13 @@ export async function buildRuntime(opts: BuildOptions = {}): Promise<FzagentRunt
         ? rawLogFile
         : join(cwd, rawLogFile)
       : undefined;
+  const consoleLevelResolved = env.LOG_LEVEL_CONSOLE ?? conf.LOG_LEVEL_CONSOLE;
+  const fileLevelResolved = env.LOG_LEVEL_FILE ?? conf.LOG_LEVEL_FILE;
   const logger = createLogger({
     level: env.LOG_LEVEL ?? conf.LOG_LEVEL,
     format: env.LOG_FORMAT ?? conf.LOG_FORMAT,
+    ...(consoleLevelResolved !== undefined && { consoleLevel: consoleLevelResolved }),
+    ...(fileLevelResolved !== undefined && { fileLevel: fileLevelResolved }),
     ...(logFilePath !== undefined && { filePath: logFilePath }),
   });
   const eventBus = createEventBus();

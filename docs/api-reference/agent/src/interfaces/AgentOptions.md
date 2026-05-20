@@ -6,7 +6,7 @@
 
 # Interface: AgentOptions
 
-Defined in: agent/src/agent.ts:54
+Defined in: agent/src/agent.ts:77
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: agent/src/agent.ts:54
 
 > **agentId**: `string`
 
-Defined in: agent/src/agent.ts:55
+Defined in: agent/src/agent.ts:78
 
 ---
 
@@ -22,7 +22,7 @@ Defined in: agent/src/agent.ts:55
 
 > **config**: [`AgentRunConfig`](AgentRunConfig.md)
 
-Defined in: agent/src/agent.ts:59
+Defined in: agent/src/agent.ts:82
 
 ---
 
@@ -30,7 +30,7 @@ Defined in: agent/src/agent.ts:59
 
 > **contextLayers**: `Omit`\<[`AssembleInput`](AssembleInput.md), `"agentId"` \| `"sessionId"` \| `"task"` \| `"tools"` \| `"logger"`\>
 
-Defined in: agent/src/agent.ts:63
+Defined in: agent/src/agent.ts:86
 
 ---
 
@@ -38,7 +38,7 @@ Defined in: agent/src/agent.ts:63
 
 > `optional` **eventBus?**: `FzagentEventBus`
 
-Defined in: agent/src/agent.ts:61
+Defined in: agent/src/agent.ts:84
 
 ---
 
@@ -46,7 +46,7 @@ Defined in: agent/src/agent.ts:61
 
 > **logger**: `FzagentLogger`
 
-Defined in: agent/src/agent.ts:60
+Defined in: agent/src/agent.ts:83
 
 ---
 
@@ -54,7 +54,7 @@ Defined in: agent/src/agent.ts:60
 
 > **router**: `ProviderRouter`
 
-Defined in: agent/src/agent.ts:56
+Defined in: agent/src/agent.ts:79
 
 ---
 
@@ -62,7 +62,7 @@ Defined in: agent/src/agent.ts:56
 
 > **sessionStore**: [`SessionStore`](../classes/SessionStore.md)
 
-Defined in: agent/src/agent.ts:58
+Defined in: agent/src/agent.ts:81
 
 ---
 
@@ -70,7 +70,7 @@ Defined in: agent/src/agent.ts:58
 
 > `optional` **toolDeps?**: `object`
 
-Defined in: agent/src/agent.ts:65
+Defined in: agent/src/agent.ts:88
 
 #### embeddings?
 
@@ -94,4 +94,4 @@ Defined in: agent/src/agent.ts:65
 
 > **tools**: [`ToolRegistry`](../classes/ToolRegistry.md)
 
-Defined in: agent/src/agent.ts:57
+Defined in: agent/src/agent.ts:80

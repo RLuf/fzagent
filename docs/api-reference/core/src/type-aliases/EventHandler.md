@@ -8,7 +8,7 @@
 
 > **EventHandler**\<`E`\> = (`event`) => `void` \| `Promise`\<`void`\>
 
-Defined in: core/src/events/index.ts:47
+Defined in: core/src/events/index.ts:67
 
 ## Type Parameters
 

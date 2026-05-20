@@ -8,4 +8,4 @@
 
 > **FzagentEnv** = `z.infer`\<_typeof_ [`EnvSchema`](../variables/EnvSchema.md)\>
 
-Defined in: core/src/config/schema.ts:144
+Defined in: core/src/config/schema.ts:161

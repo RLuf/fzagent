@@ -6,7 +6,7 @@
 
 # Class: Agent
 
-Defined in: agent/src/agent.ts:83
+Defined in: agent/src/agent.ts:106
 
 ## Constructors
 
@@ -14,7 +14,7 @@ Defined in: agent/src/agent.ts:83
 
 > **new Agent**(`opts`): `Agent`
 
-Defined in: agent/src/agent.ts:86
+Defined in: agent/src/agent.ts:109
 
 #### Parameters
 
@@ -32,7 +32,7 @@ Defined in: agent/src/agent.ts:86
 
 > **run**(`input`): `AsyncIterable`\<[`AgentEvent`](../type-aliases/AgentEvent.md)\>
 
-Defined in: agent/src/agent.ts:90
+Defined in: agent/src/agent.ts:113
 
 #### Parameters
 

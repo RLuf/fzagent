@@ -6,7 +6,7 @@ Bem-vindo à documentação do **fzagent**, o cérebro central do sistema OODA R
 
 ### 1. Requisitos
 
-- **Node.js 18+**
+- **Node.js 22 LTS** (engines.node `>=22.0.0`)
 - **Qdrant** (opcional, para memória de longo prazo/RAG)
 - **Google API Key** (Gemini) ou OpenAI/Anthropic.
 

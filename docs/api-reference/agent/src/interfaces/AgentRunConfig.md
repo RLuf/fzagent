@@ -6,7 +6,7 @@
 
 # Interface: AgentRunConfig
 
-Defined in: agent/src/agent.ts:46
+Defined in: agent/src/agent.ts:62
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: agent/src/agent.ts:46
 
 > **circuitBreakerCooldownMs**: `number`
 
-Defined in: agent/src/agent.ts:50
+Defined in: agent/src/agent.ts:66
 
 ---
 
@@ -22,7 +22,23 @@ Defined in: agent/src/agent.ts:50
 
 > **circuitBreakerMaxFailures**: `number`
 
-Defined in: agent/src/agent.ts:49
+Defined in: agent/src/agent.ts:65
+
+---
+
+### compactionKeepRecent?
+
+> `optional` **compactionKeepRecent?**: `number`
+
+Defined in: agent/src/agent.ts:74
+
+---
+
+### compactionThresholdPct?
+
+> `optional` **compactionThresholdPct?**: `number`
+
+Defined in: agent/src/agent.ts:71
 
 ---
 
@@ -30,7 +46,15 @@ Defined in: agent/src/agent.ts:49
 
 > **defaultModel**: `string`
 
-Defined in: agent/src/agent.ts:51
+Defined in: agent/src/agent.ts:67
+
+---
+
+### historyTurns?
+
+> `optional` **historyTurns?**: `number`
+
+Defined in: agent/src/agent.ts:70
 
 ---
 
@@ -38,7 +62,23 @@ Defined in: agent/src/agent.ts:51
 
 > **maxIterations**: `number`
 
-Defined in: agent/src/agent.ts:47
+Defined in: agent/src/agent.ts:63
+
+---
+
+### reinjectEvery?
+
+> `optional` **reinjectEvery?**: `number`
+
+Defined in: agent/src/agent.ts:72
+
+---
+
+### taskPinningEnabled?
+
+> `optional` **taskPinningEnabled?**: `boolean`
+
+Defined in: agent/src/agent.ts:73
 
 ---
 
@@ -46,4 +86,4 @@ Defined in: agent/src/agent.ts:47
 
 > **tokenBudget**: `number`
 
-Defined in: agent/src/agent.ts:48
+Defined in: agent/src/agent.ts:64

@@ -8,7 +8,7 @@
 
 > **createEventBus**(): [`FzagentEventBus`](../interfaces/FzagentEventBus.md)
 
-Defined in: core/src/events/index.ts:68
+Defined in: core/src/events/index.ts:88
 
 ## Returns
 

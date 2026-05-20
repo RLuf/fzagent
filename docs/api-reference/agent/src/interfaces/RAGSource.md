@@ -6,7 +6,7 @@
 
 # Interface: RAGSource
 
-Defined in: agent/src/context-assembler.ts:27
+Defined in: agent/src/context-assembler.ts:32
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: agent/src/context-assembler.ts:27
 
 > **collection**: `string`
 
-Defined in: agent/src/context-assembler.ts:28
+Defined in: agent/src/context-assembler.ts:33
 
 ---
 
@@ -22,7 +22,7 @@ Defined in: agent/src/context-assembler.ts:28
 
 > **search**: (`q`) => `Promise`\<`string`[]\>
 
-Defined in: agent/src/context-assembler.ts:30
+Defined in: agent/src/context-assembler.ts:35
 
 #### Parameters
 

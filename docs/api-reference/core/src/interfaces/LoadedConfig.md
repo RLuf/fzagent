@@ -24,6 +24,10 @@ Defined in: core/src/config/index.ts:32
 
 > **AGENTIC_CIRCUIT_BREAKER_MAX_FAILURES**: `number`
 
+#### AGENTIC_COMPACTION_KEEP_RECENT
+
+> **AGENTIC_COMPACTION_KEEP_RECENT**: `number`
+
 #### AGENTIC_COMPACTION_THRESHOLD_PCT
 
 > **AGENTIC_COMPACTION_THRESHOLD_PCT**: `number`
@@ -39,6 +43,14 @@ Defined in: core/src/config/index.ts:32
 #### AGENTIC_MAX_ITERATIONS
 
 > **AGENTIC_MAX_ITERATIONS**: `number`
+
+#### AGENTIC_REINJECT_EVERY
+
+> **AGENTIC_REINJECT_EVERY**: `number`
+
+#### AGENTIC_TASK_PINNING_ENABLED
+
+> **AGENTIC_TASK_PINNING_ENABLED**: `boolean`
 
 #### AGENTIC_TOKEN_BUDGET
 
@@ -83,6 +95,14 @@ Defined in: core/src/config/index.ts:32
 #### LOG_LEVEL
 
 > **LOG_LEVEL**: `string`
+
+#### LOG_LEVEL_CONSOLE?
+
+> `optional` **LOG_LEVEL_CONSOLE?**: `string`
+
+#### LOG_LEVEL_FILE?
+
+> `optional` **LOG_LEVEL_FILE?**: `string`
 
 #### LOGS_DIR
 

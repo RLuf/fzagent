@@ -6,7 +6,7 @@
 
 # Class: OpenAIProvider
 
-Defined in: providers/src/adapters/openai.ts:184
+Defined in: providers/src/adapters/openai.ts:196
 
 ## Extends
 
@@ -18,7 +18,7 @@ Defined in: providers/src/adapters/openai.ts:184
 
 > **new OpenAIProvider**(`opts`): `OpenAIProvider`
 
-Defined in: providers/src/adapters/openai.ts:189
+Defined in: providers/src/adapters/openai.ts:201
 
 #### Parameters
 
@@ -40,7 +40,7 @@ Defined in: providers/src/adapters/openai.ts:189
 
 > `protected` `readonly` **client**: `OpenAI`
 
-Defined in: providers/src/adapters/openai.ts:187
+Defined in: providers/src/adapters/openai.ts:199
 
 #### Overrides
 
@@ -88,7 +88,7 @@ Defined in: providers/src/base.ts:26
 
 > `readonly` **models**: readonly `string`[]
 
-Defined in: providers/src/adapters/openai.ts:186
+Defined in: providers/src/adapters/openai.ts:198
 
 #### Overrides
 
@@ -100,7 +100,7 @@ Defined in: providers/src/adapters/openai.ts:186
 
 > `readonly` **name**: `"openai"`
 
-Defined in: providers/src/adapters/openai.ts:185
+Defined in: providers/src/adapters/openai.ts:197
 
 #### Overrides
 
@@ -124,7 +124,7 @@ Defined in: providers/src/base.ts:23
 
 > **complete**(`messages`, `options`): `Promise`\<[`CompleteResult`](../interfaces/CompleteResult.md)\>
 
-Defined in: providers/src/adapters/openai.ts:35
+Defined in: providers/src/adapters/openai.ts:36
 
 #### Parameters
 
@@ -150,7 +150,7 @@ Defined in: providers/src/adapters/openai.ts:35
 
 > **stream**(`messages`, `options`): `AsyncIterable`\<[`StreamChunk`](../type-aliases/StreamChunk.md)\>
 
-Defined in: providers/src/adapters/openai.ts:98
+Defined in: providers/src/adapters/openai.ts:105
 
 #### Parameters
 

@@ -8,4 +8,4 @@
 
 > **FzagentEventName** = keyof [`FzagentEventMap`](FzagentEventMap.md)
 
-Defined in: core/src/events/index.ts:45
+Defined in: core/src/events/index.ts:65

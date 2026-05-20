@@ -8,7 +8,7 @@
 
 > **getEnvVarName**(`provider`, `env?`): `string`
 
-Defined in: providers/src/credentials.ts:88
+Defined in: providers/src/credentials.ts:86
 
 ## Parameters
 

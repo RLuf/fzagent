@@ -6,7 +6,7 @@
 
 # Interface: PersonalityLayer
 
-Defined in: agent/src/context-assembler.ts:23
+Defined in: agent/src/context-assembler.ts:28
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: agent/src/context-assembler.ts:23
 
 > **text**: `string`
 
-Defined in: agent/src/context-assembler.ts:24
+Defined in: agent/src/context-assembler.ts:29

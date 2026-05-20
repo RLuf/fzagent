@@ -8,4 +8,4 @@
 
 > **FzagentConf** = `z.infer`\<_typeof_ [`FzagentConfSchema`](../variables/FzagentConfSchema.md)\>
 
-Defined in: core/src/config/schema.ts:103
+Defined in: core/src/config/schema.ts:118

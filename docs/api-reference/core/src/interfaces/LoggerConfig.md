@@ -14,7 +14,15 @@ Defined in: core/src/logger/index.ts:15
 
 > `optional` **bindings?**: `Record`\<`string`, `unknown`\>
 
-Defined in: core/src/logger/index.ts:18
+Defined in: core/src/logger/index.ts:22
+
+---
+
+### consoleLevel?
+
+> `optional` **consoleLevel?**: `string`
+
+Defined in: core/src/logger/index.ts:19
 
 ---
 
@@ -22,7 +30,15 @@ Defined in: core/src/logger/index.ts:18
 
 > `optional` **destination?**: `DestinationStream`
 
-Defined in: core/src/logger/index.ts:19
+Defined in: core/src/logger/index.ts:23
+
+---
+
+### fileLevel?
+
+> `optional` **fileLevel?**: `string`
+
+Defined in: core/src/logger/index.ts:20
 
 ---
 
@@ -30,7 +46,7 @@ Defined in: core/src/logger/index.ts:19
 
 > `optional` **filePath?**: `string`
 
-Defined in: core/src/logger/index.ts:22
+Defined in: core/src/logger/index.ts:26
 
 ---
 
@@ -38,7 +54,7 @@ Defined in: core/src/logger/index.ts:22
 
 > `optional` **format?**: [`LogFormat`](../type-aliases/LogFormat.md)
 
-Defined in: core/src/logger/index.ts:17
+Defined in: core/src/logger/index.ts:21
 
 ---
 

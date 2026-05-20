@@ -8,7 +8,7 @@
 
 > **createLogger**(`config?`): [`FzagentLogger`](../type-aliases/FzagentLogger.md)
 
-Defined in: core/src/logger/index.ts:32
+Defined in: core/src/logger/index.ts:56
 
 ## Parameters
 

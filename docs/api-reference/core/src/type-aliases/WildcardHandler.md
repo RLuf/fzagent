@@ -8,7 +8,7 @@
 
 > **WildcardHandler**\<`M`\> = \<`K`\>(`name`, `payload`) => `void` \| `Promise`\<`void`\>
 
-Defined in: core/src/events/index.ts:48
+Defined in: core/src/events/index.ts:68
 
 ## Type Parameters
 

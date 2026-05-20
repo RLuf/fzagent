@@ -1,7 +1,14 @@
-# AGENTS.md — guia para coding agents
+# AGENTS.md
 
-Este arquivo orienta agentes (Claude Code, Cursor, Gemini Code, etc.) que
-trabalharem neste repo. Reflete o estado **atual** do projeto, nao roadmap.
+> **REGRA ZERO — smoke test OBRIGATORIO depois de cada mudanca.**
+> Vitest verde nao prova nada. Toda mudanca em codigo ou config termina
+> com `npm run build` + invocacao real do binario (`fzagent skill list`,
+> `fzagent tools list`, `fzagent config`, ou qualquer outra). Se o
+> output nao for o esperado, a mudanca falhou — mesmo que o vitest
+> tenha passado. Nao marcar tarefa como done sem smoke.
+> Isto substitui dezenas de testes vitest que tendem a sair verdes
+> mesmo quando o binario quebra (mocks divergem do real, build falha
+> silenciosa, config runtime nao bate com fixture).
 
 ## Sobre o projeto
 
@@ -125,6 +132,17 @@ callback TTY-aware. `shell.exec` eh a unica HIGH atualmente. Bypass:
    eh esperado e desejavel.
 3. Rode `npm test` localmente. CI sera intransigente.
 4. Commits pequenos, focados. Pre-commit hook formata sozinho.
+
+## Depois de mexer — checklist concreto da REGRA ZERO
+
+1. `npm run build` — build precisa sair limpo.
+2. `npm run docs:api` se mexeu em `packages/*/src/index.ts` (exports
+   publicos). Drift em `docs/api-reference/` precisa ser commitado junto.
+3. Invocacao real do binario com pelo menos um comando — exemplos
+   nao-destrutivos: `fzagent skill list`, `fzagent tools list`,
+   `fzagent config`, `fzagent --help`.
+4. Conferir output: tem que estar coerente com a mudanca. Se nao bater,
+   a mudanca falhou.
 
 ## Recursos externos
 

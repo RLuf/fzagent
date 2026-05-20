@@ -8,7 +8,7 @@
 
 > **generateSessionId**(): `string`
 
-Defined in: agent/src/agent.ts:314
+Defined in: agent/src/agent.ts:378
 
 ## Returns
 

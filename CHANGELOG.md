@@ -13,6 +13,21 @@ Convencoes de commit: [Conventional Commits](https://www.conventionalcommits.org
 
 Trabalho em curso. Veja a secao [0.1.0](#010---2026-05-19) para o estado atual.
 
+### Added
+
+- **Split de log levels por sink** (`LOG_LEVEL_CONSOLE`, `LOG_LEVEL_FILE`):
+  cada target do dual sink (console + arquivo) pode ter seu proprio
+  level. Quando ausentes, herdam `LOG_LEVEL`. Receita operacional:
+  `LOG_LEVEL_CONSOLE=silent` + `LOG_LEVEL_FILE=debug` deixa o console
+  quieto e o arquivo verboso para forensics.
+
+### Changed
+
+- **Politica de homologacao** em `AGENTS.md`: alem do `npm test`, toda
+  mudanca termina com `npm run build` + invocacao real do binario
+  `fzagent` (smoke obrigatorio). Vitest verde com binario quebrado nao
+  conta como done.
+
 ### Planejado
 
 - FCC fix sub-sessao 2: compaction LLM com `groupAtomicUnits` preservando
@@ -22,6 +37,8 @@ Trabalho em curso. Veja a secao [0.1.0](#010---2026-05-19) para o estado atual.
 - Meta-skill `skill.create` (autoconstrucao a partir do registry).
 - GeminiProxyProvider via Cloudflare Worker (camada OpenAI-compat sem
   SDK proprietario no runtime).
+- Shell completion (bash/zsh) para o binario `fzagent` — hoje so `--help`
+  do commander esta disponivel.
 
 ---
 

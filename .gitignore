@@ -3,6 +3,14 @@ node_modules/
 .npm/
 .pnpm-store/
 
+# python (venv, bytecode, metadados de pacote)
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.venv*/
+venv/
+
 # builds
 dist/
 .tsup/

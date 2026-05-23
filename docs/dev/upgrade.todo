@@ -1,0 +1,65 @@
+# CLI Development Task for ANTIGRAVITY
+
+## Objective
+Create a comprehensive CLI interface for fzagent by studying existing Claude Code CLI implementations and developing a daemon-based architecture.
+
+## Phase 1: Research and Documentation
+1. Study the official Claude Code CLI project structure and architecture
+2. Create a backup of current workspace state
+3. Use reverse engineering techniques to extract specifications from:
+   - GitHub repositories (claude-cli, anthropic/claude-code)
+   - Similar CLI tools and frameworks
+   - Open source CLI implementations
+4. Document findings in `@docs/cli_specs.md` with:
+   - Command structure and syntax
+   - Configuration patterns
+   - Authentication mechanisms
+   - Error handling approaches
+   - Plugin/extension systems
+
+## Phase 2: Architecture Design
+Design a CLI for fzagent with these requirements:
+- **Daemon Process**: Background service for persistent operations
+- **Heartbeat System**: Regular health checks and status reporting
+- **Command Interface**: User-friendly commands for all fzagent capabilities
+- **Configuration Management**: Secure credential storage and preferences
+- **Plugin Architecture**: Extensible skill system integration
+- **MCP Integration**: Model Context Protocol support for enhanced AI interactions
+- **Firebase-like Real-time**: WebSocket connections for live status updates
+- **Self-Development**: Auto-update mechanisms and capability expansion
+- **Tool Discovery**: Dynamic loading of new tools and skills
+
+## Phase 3: Implementation Plan
+Create implementation roadmap covering:
+1. Core CLI framework setup with MCP bindings
+2. Daemon process with WebSocket server for real-time updates
+3. Self-updating mechanisms and tool discovery
+4. Integration with existing fzagent tools plus auto-expansion
+5. Testing and validation strategy
+
+## Technical Constraints & Preferences
+- **Language**: Python 3.8+ (preferred over Node ESM)
+  - Superior daemon/background process handling
+  - Rich CLI ecosystem (click, typer, rich)
+  - Better cross-platform process management
+  - Native integration with existing fzagent tools
+- **Architecture**: Async-first with asyncio for daemon operations
+- **CLI Framework**: Typer (FastAPI ecosystem) or Click for command parsing
+- **Process Management**: systemd integration on Linux, proper signal handling
+- **IPC**: Unix sockets for daemon communication, JSON-RPC protocol
+- **Real-time**: WebSocket server for Firebase-like live updates
+- **MCP Support**: Native Model Context Protocol integration
+- **Auto-Update**: Git-based self-updating with semantic versioning
+- Follow ASCII-only encoding for maximum compatibility
+- Implement proper error handling and logging
+- Ensure secure credential management
+- Support both interactive and non-interactive modes
+
+## Deliverables
+1. Comprehensive specification document in `@docs/cli_specs.md`
+2. Detailed implementation plan
+3. Prototype CLI structure with Python/Typer
+4. Daemon architecture design using asyncio
+5. Testing framework setup with pytest
+
+Begin with Phase 1 research and documentation.

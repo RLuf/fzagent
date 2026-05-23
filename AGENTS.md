@@ -143,6 +143,44 @@ callback TTY-aware. `shell.exec` eh a unica HIGH atualmente. Bypass:
    `fzagent config`, `fzagent --help`.
 4. Conferir output: tem que estar coerente com a mudanca. Se nao bater,
    a mudanca falhou.
+5. **Atualizar `CHANGELOG.md`** — toda mudanca relevante (feat/fix/chore
+   nao trivial) entra na secao `[Unreleased]`. Keep a Changelog 1.1.0:
+   `### Added` / `### Changed` / `### Fixed` / `### Removed` / `### Security`.
+   Sem entry no changelog, a mudanca esta incompleta — mesmo que
+   build + smoke estejam verdes.
+
+## Politicas operacionais (regras do operador)
+
+### Antes de deletar — sempre `archived/`
+
+Antes de remover qualquer arquivo ou pasta do disco, **mover para
+`archived/<nome>.<motivo>-<data-iso>`**. Preserva historico local sem
+poluir o repo (`archived/` esta no `.gitignore`).
+
+```
+mv fzagent.conf archived/fzagent.conf.pre-log-split-2026-05-20
+```
+
+Apenas apagar quando o arquivo eh demonstravelmente irrecuperavel ou
+gerado (dist/, node_modules/).
+
+### ASCII-only por padrao
+
+Em codigo, comentarios, mensagens de erro, prompts gerados e
+documentacao em `docs/*.md` — **escrever sem acentos**. Inputs do
+usuario podem vir acentuados (pt-br natural); preservar como recebido.
+A norma vale para o que **escrevemos**, nao para o que **citamos**.
+
+Excecao: `wiki/` e conteudo de skills (`skills-claude/<nome>/`) podem ter
+acentos quando o conteudo eh material humano natural (sem norma rigida).
+
+### Mascaramento de credenciais
+
+`fzagent config` ja mascara secrets. Ao mostrar ou logar qualquer
+config/env em outro contexto (debug, mensagem de erro, output de tool),
+**mascarar API keys, OAuth tokens, secrets**. Padrao: primeiros 4 chars +
+`...` + ultimos 4 chars (`sk-a1b2...wxyz`). Nunca printar token inteiro
+mesmo em DEBUG.
 
 ## Recursos externos
 

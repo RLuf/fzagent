@@ -13,6 +13,8 @@ estado **observado**, nao roadmap.
 | [skills-and-tools.md](skills-and-tools.md) | SkillRegistry, ToolRegistry, manifest v1, gate HIGH, auditoria |
 | [providers.md](providers.md)               | ProviderRouter, capability negotiation, adapters               |
 | [operations.md](operations.md)             | fzagent.conf, .env, comandos CLI, logging                      |
+| [cli-python.md](cli-python.md)             | CLI alternativa e gerenciador de daemon em Python 3.7+         |
+
 
 ## Indice — gerado automaticamente
 

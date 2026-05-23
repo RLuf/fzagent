@@ -1,0 +1,252 @@
+# PROMPT DURO: CLI LOOP INSPIRADO NO CLAUDE CODE CLI
+
+## ANÁLISE CRÍTICA DO TRABALHO DA GEMINI 3.5
+
+### FALHAS IDENTIFICADAS NO CÓDIGO ATUAL:
+
+1. **ARQUITETURA FUNDAMENTALMENTE ERRADA**:
+   - Gemini criou um daemon complexo desnecessário com IPC/JSON-RPC/WebSockets
+   - Claude Code CLI é SIMPLES: um binário que roda diretamente no terminal
+   - Não precisa de daemon rodando em background - isso é overengineering
+
+2. **FALTA COMPLETA DO LOOP INTERATIVO**:
+   - O código atual só tem comandos one-shot
+   - Claude Code tem REPL mode: você executa `claude` e entra num loop interativo
+   - Faltou completamente o conceito de sessão conversacional contínua
+
+3. **AUSÊNCIA DE SLASH COMMANDS**:
+   - Claude Code tem `/help`, `/clear`, `/model`, `/diff`, `/compact`, `/resume`
+   - O código atual não tem nenhum desses comandos internos
+
+4. **SEM STREAMING DE RESPOSTAS**:
+   - Claude Code mostra o LLM "pensando" em tempo real
+   - O código atual só retorna resultado final
+
+5. **FALTA DE CONTEXT AWARENESS**:
+   - Não mantém contexto da conversa entre comandos
+   - Não faz compactação automática quando atinge token limit
+
+6. **INTERFACE POBRE**:
+   - Não usa Rich adequadamente para interface bonita
+   - Não tem spinners, progress bars, formatação de código
+
+## ESPECIFICAÇÃO TÉCNICA PRECISA DO QUE PRECISA SER FEITO:
+
+### OBJETIVO PRINCIPAL:
+Criar um CLI que funcione EXATAMENTE como o Claude Code CLI, mas para fzagent.
+
+### MODO DE OPERAÇÃO:
+
+1. **MODO NON-INTERACTIVE**:
+   ```bash
+   fzagent "fix the tests in packages/core"
+   fzagent -p "describe this codebase architecture"
+   fzagent --model gemini-2.0-flash "refactor this module"
+   ```
+   - Executa comando, mostra streaming da resposta, sai
+
+2. **MODO INTERACTIVE (REPL)**:
+   ```bash
+   fzagent
+   # ou
+   fzagent -c  # resume conversation
+   ```
+   - Entra num loop infinito
+   - Aceita prompts do usuário
+   - Mantém contexto conversacional
+   - Suporta slash commands
+
+### SLASH COMMANDS OBRIGATÓRIOS:
+
+- `/help` - Mostra ajuda dos comandos
+- `/clear` - Limpa contexto da conversa
+- `/model <name>` - Troca modelo LLM
+- `/diff` - Mostra diferenças de arquivos modificados
+- `/compact` - Força compactação do contexto
+- `/resume` - Resume última conversa
+- `/exit` ou `/quit` - Sai do REPL
+- `/files` - Lista arquivos no contexto atual
+- `/tools` - Lista tools disponíveis
+- `/skills` - Lista skills disponíveis
+
+### ARQUITETURA TÉCNICA OBRIGATÓRIA:
+
+#### TECNOLOGIAS:
+- **Python 3.7+** (compatibilidade garantida)
+- **Rich** para interface terminal bonita
+- **Prompt-toolkit** para REPL avançado com autocomplete
+- **asyncio** APENAS para streaming, não para daemon
+- **NO DAEMON** - programa simples que roda e sai
+
+#### ESTRUTURA DO PROJETO:
+```
+packages/cli-loop/
+├── src/
+│   ├── cli.py          # Entry point with argparse
+│   ├── repl.py         # Interactive REPL loop
+│   ├── session.py      # Conversation session management  
+│   ├── commands.py     # Slash commands implementation
+│   ├── streaming.py    # LLM response streaming
+│   ├── context.py      # Context window management
+│   └── interface.py    # Rich UI components
+├── requirements.txt
+└── tests/
+```
+
+#### FLUXO DE EXECUÇÃO:
+
+1. **Entry Point (`cli.py`)**:
+   ```python
+   import argparse
+   
+   def main():
+       parser = argparse.ArgumentParser()
+       parser.add_argument('prompt', nargs='?')
+       parser.add_argument('-c', '--continue', action='store_true')
+       parser.add_argument('-m', '--model')
+       args = parser.parse_args()
+       
+       if args.prompt:
+           # Non-interactive mode
+           run_single_prompt(args.prompt, args.model)
+       else:
+           # Interactive REPL mode
+           start_repl(args.continue_session)
+   ```
+
+2. **REPL Loop (`repl.py`)**:
+   ```python
+   from prompt_toolkit import prompt
+   from rich.console import Console
+   
+   class REPL:
+       def __init__(self):
+           self.session = Session()
+           self.console = Console()
+           
+       def run(self):
+           while True:
+               try:
+                   user_input = prompt('fzagent> ', completer=self.completer)
+                   if user_input.startswith('/'):
+                       self.handle_slash_command(user_input)
+                   else:
+                       self.handle_prompt(user_input)
+               except KeyboardInterrupt:
+                   break
+   ```
+
+3. **Session Management (`session.py`)**:
+   - Mantém histórico de mensagens
+   - Gerencia token budget
+   - Auto-compacta quando necessário
+   - Salva/carrega conversas
+
+4. **Streaming (`streaming.py`)**:
+   ```python
+   async def stream_response(prompt: str, model: str):
+       # Chama o fzagent Node.js via subprocess
+       # Processa stdout line-by-line
+       # Mostra em tempo real com Rich
+       with console.status("[bold green]Thinking..."):
+           async for chunk in agent_response_stream(prompt, model):
+               console.print(chunk, end='')
+   ```
+
+### REQUISITOS DE INTERFACE:
+
+1. **VISUAL IDÊNTICO AO CLAUDE CODE**:
+   - Prompt bonito com cores
+   - Streaming de texto suave
+   - Spinners durante "thinking"
+   - Syntax highlighting para código
+   - Progress bars para operações longas
+
+2. **AUTOCOMPLETE**:
+   - Slash commands
+   - Nomes de arquivos
+   - Nomes de tools/skills
+   - Histórico de comandos
+
+3. **KEYBOARD SHORTCUTS**:
+   - Ctrl+C para interromper
+   - Ctrl+D para sair
+   - Seta para cima/baixo para histórico
+   - Tab para autocomplete
+
+### INTEGRAÇÃO COM FZAGENT EXISTENTE:
+
+- **NÃO MEXER** no código Node.js existente
+- CLI Python chama `node packages/cli/dist/cli.js` via subprocess
+- Parseia outputs para extrair streaming responses
+- Mantém compatibilidade total com tools/skills existentes
+
+### CRITÉRIOS DE SUCESSO:
+
+1. **FUNCIONALIDADE**:
+   - `fzagent "task"` funciona como Claude Code
+   - `fzagent` abre REPL interativo funcional
+   - Todos slash commands funcionam
+   - Context management funciona
+
+2. **USABILIDADE**:
+   - Interface visualmente idêntica ao Claude Code
+   - Streaming suave de respostas
+   - Autocomplete funcional
+   - Navegação de histórico funcional
+
+3. **PERFORMANCE**:
+   - Startup time < 1 segundo
+   - Streaming sem lag perceptível
+   - Memory usage razoável para sessões longas
+
+### ANTI-PATTERNS A EVITAR:
+
+❌ **DAEMON/BACKGROUND SERVICES** - Claude Code não usa
+❌ **WEBSOCKETS/IPC** - Desnecessário para CLI
+❌ **OVERENGINEERING** - Keep it simple
+❌ **BREAKING CHANGES** - Não mexer no fzagent existente
+❌ **DEPENDÊNCIAS PESADAS** - Manter requirements.txt enxuto
+
+### EXEMPLO DE USO ESPERADO:
+
+```bash
+$ fzagent "analyze this codebase structure"
+[Thinking...]
+Based on the codebase structure, I can see this is a multi-package...
+
+$ fzagent
+fzagent> hello, can you help me refactor some code?
+I'd be happy to help you refactor code! Could you show me...
+
+fzagent> /files
+📁 Current context includes:
+  - packages/core/src/agent.ts (modified 2 minutes ago)
+  - packages/cli/src/index.ts
+
+fzagent> let's focus on the agent.ts file
+Looking at packages/core/src/agent.ts...
+
+fzagent> /model gemini-2.0-flash
+✓ Model changed to gemini-2.0-flash
+
+fzagent> /diff
+📝 Recent changes in packages/core/src/agent.ts:
+[diff output with syntax highlighting]
+
+fzagent> /clear
+✓ Conversation context cleared
+
+fzagent> /exit
+```
+
+## DEADLINE E ENTREGÁVEIS:
+
+1. **packages/cli-loop/** - Estrutura completa do projeto
+2. **Documentação** - README.md com exemplos de uso
+3. **Testes** - pytest suite básica
+4. **Demo video** - Gravação de 2 minutos mostrando funcionalidades
+
+**PRAZO: IMPLEMENTAR TUDO ACIMA EM UMA ÚNICA SESSÃO**
+
+Este é o padrão mínimo aceitável. Qualquer coisa menos que isso é considerado falha.

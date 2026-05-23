@@ -23,6 +23,8 @@ import { fileURLToPath } from 'node:url';
 import { Command } from 'commander';
 import pc from 'picocolors';
 
+import type { Message } from '@fzagent/core';
+
 import { buildAgent, buildRuntime } from './factory.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -35,7 +37,10 @@ program
   .name('fzagent')
   .description('Superagente OpenClaw-style com cerebro secundario.')
   .version(pkg.version, '-v, --version')
-  .option('--cli', 'modo CLI interativo')
+  .option('--cli', 'modo CLI interativo (REPL)')
+  .option('-c, --continue', 'continua a ultima sessao (default em REPL; explicito em one-shot)')
+  .option('--new', 'forca sessao nova (descarta history acumulada)')
+  .option('-m, --model <model>', 'modelo LLM para esta rodada')
   .option('--dry-run', 'nao executa tools com side-effects (impl gradual)')
   .argument('[prompt]', 'one-shot prompt');
 
@@ -419,29 +424,63 @@ async function handleServiceCommand(cmd: string) {
 }
 
 // fallback: prompt one-shot ou --cli
-program.action(async (prompt: string | undefined, opts: { cli?: boolean }) => {
-  if (opts.cli) {
-    await runInteractive();
-    return;
-  }
-  if (prompt) {
-    await runAgentLoop(prompt, {});
-    return;
-  }
-  program.help();
-});
+program.action(
+  async (
+    prompt: string | undefined,
+    opts: { cli?: boolean; continue?: boolean; new?: boolean; model?: string },
+  ) => {
+    if (opts.cli) {
+      await runInteractive({
+        ...(opts.continue && { continueLast: true }),
+        ...(opts.model !== undefined && { model: opts.model }),
+      });
+      return;
+    }
+    if (prompt) {
+      // ONE-SHOT: continuidade ATIVA por default (Roginho usa one-shot)
+      // pode desligar com --new explicito.
+      const continueLast = !opts.new;
+      await runAgentLoop(prompt, {
+        continueLast,
+        ...(opts.model !== undefined && { model: opts.model }),
+      });
+      return;
+    }
+    program.help();
+  },
+);
 
 async function runAgentLoop(
   task: string,
-  opts: { model?: string; maxIterations?: number; tokenBudget?: number },
+  opts: {
+    model?: string;
+    maxIterations?: number;
+    tokenBudget?: number;
+    continueLast?: boolean;
+  },
 ): Promise<void> {
   const rt = await buildRuntime({ silent: true });
   if (opts.maxIterations !== undefined) rt.conf.AGENTIC_MAX_ITERATIONS = opts.maxIterations;
   if (opts.tokenBudget !== undefined) rt.conf.AGENTIC_TOKEN_BUDGET = opts.tokenBudget;
   const a = buildAgent(rt);
+  const agentId = 'fzagent';
+
+  // Carrega history da ULTIMA sessao do agentId, se solicitado.
+  let history: Message[] = [];
+  if (opts.continueLast) {
+    const recent = rt.sessionStore.listSessions(agentId, 1);
+    if (recent.length > 0) {
+      history = rt.sessionStore.getRecentTurns(recent[0]!.id, rt.conf.AGENTIC_HISTORY_TURNS);
+      console.log(
+        pc.dim(`[continue] retomando de ${recent[0]!.id.slice(0, 8)} (${history.length} msgs)`),
+      );
+    }
+  }
+
   try {
     for await (const ev of a.run({
       task,
+      history,
       ...(opts.model !== undefined && { model: opts.model }),
     })) {
       switch (ev.type) {
@@ -506,15 +545,198 @@ async function runAgentLoop(
   }
 }
 
-async function runInteractive(): Promise<void> {
+async function runInteractive(
+  opts: { continueLast?: boolean; model?: string } = {},
+): Promise<void> {
   const rl = createInterface({ input: process.stdin, output: process.stdout });
-  console.log(pc.bold('fzagent') + pc.dim(' — modo interativo (vazio para sair)'));
-  while (true) {
-    const line = (await rl.question(pc.cyan('> '))).trim();
-    if (!line) break;
-    await runAgentLoop(line, {});
+  const rt = await buildRuntime({ silent: true });
+  const a = buildAgent(rt);
+  const agentId = 'fzagent';
+
+  // estado da sessao interativa
+  let history: Message[] = [];
+  let currentModel: string | undefined = opts.model;
+  let currentSessionId: string | undefined;
+
+  console.log(pc.bold('fzagent') + pc.dim(' — modo interativo'));
+  console.log(
+    pc.dim(
+      'comandos: /help /model [id] /clear /reset /sessions [N] /load <id> /tools /skills /save /exit',
+    ),
+  );
+
+  // -c: pre-carrega ultima sessao
+  if (opts.continueLast) {
+    const recent = rt.sessionStore.listSessions(agentId, 1);
+    if (recent.length > 0) {
+      history = rt.sessionStore.getRecentTurns(recent[0]!.id, rt.conf.AGENTIC_HISTORY_TURNS);
+      currentSessionId = recent[0]!.id;
+      console.log(
+        pc.green(
+          `[continue] retomada de ${recent[0]!.id.slice(0, 8)} (${history.length} msgs)`,
+        ),
+      );
+    } else {
+      console.log(pc.dim('[continue] nenhuma sessao anterior; comecando do zero'));
+    }
   }
-  rl.close();
+
+  try {
+    while (true) {
+      const line = (await rl.question(pc.cyan('> '))).trim();
+      if (!line) break;
+
+      // slash commands
+      if (line.startsWith('/')) {
+        const [cmd, ...args] = line.slice(1).split(/\s+/);
+        if (cmd === 'help') {
+          console.log(pc.dim('/help                este menu'));
+          console.log(pc.dim('/model               imprime modelo atual + opcoes'));
+          console.log(pc.dim('/model <id>          troca modelo das proximas rodadas'));
+          console.log(pc.dim('/clear  /reset       zera history em memoria'));
+          console.log(pc.dim('/sessions [N]        lista N sessoes mais recentes (default 10)'));
+          console.log(pc.dim('/load <sessionId>    carrega history de uma sessao antiga (prefix OK)'));
+          console.log(pc.dim('/tools               lista tools registradas'));
+          console.log(pc.dim('/skills              lista skills registradas'));
+          console.log(pc.dim('/save                imprime quantas msgs estao persistidas'));
+          console.log(pc.dim('/exit  /quit         sai do REPL (linha vazia tambem sai)'));
+        } else if (cmd === 'model') {
+          if (args.length === 0) {
+            console.log(pc.dim(`atual: ${currentModel ?? rt.conf.DEFAULT_MODEL}`));
+            console.log(pc.dim(`MODELS_ANTHROPIC: ${rt.conf.MODELS_ANTHROPIC}`));
+            console.log(pc.dim(`MODELS_OLLAMA:    ${rt.conf.MODELS_OLLAMA}`));
+            if (rt.conf.MODELS_GOOGLE) console.log(pc.dim(`MODELS_GOOGLE:    ${rt.conf.MODELS_GOOGLE}`));
+            if (rt.conf.MODELS_OPENAI) console.log(pc.dim(`MODELS_OPENAI:    ${rt.conf.MODELS_OPENAI}`));
+          } else {
+            currentModel = args[0];
+            console.log(pc.green(`modelo trocado: ${args[0]}`));
+          }
+        } else if (cmd === 'reset' || cmd === 'clear') {
+          history = [];
+          currentSessionId = undefined;
+          console.log(pc.yellow('history zerada (proxima msg inicia sessao nova)'));
+        } else if (cmd === 'sessions') {
+          const n = args[0] ? Number(args[0]) : 10;
+          const list = rt.sessionStore.listSessions(agentId, n);
+          if (list.length === 0) {
+            console.log(pc.dim('(nenhuma sessao)'));
+          } else {
+            for (const s of list) {
+              const dt = new Date(s.startedAt).toISOString().replace('T', ' ').slice(0, 19);
+              const tag = s.id === currentSessionId ? pc.green(' *') : '  ';
+              console.log(
+                `${tag}${pc.cyan(s.id.slice(0, 8))}  ${pc.dim(dt)}  ${pc.dim(s.status)}  ${(s.task ?? '').slice(0, 60)}`,
+              );
+            }
+          }
+        } else if (cmd === 'load') {
+          if (!args[0]) {
+            console.log(pc.red('uso: /load <sessionId>  (prefixo de 8 chars OK)'));
+          } else {
+            const all = rt.sessionStore.listSessions(agentId, 200);
+            const match = all.find((s) => s.id === args[0] || s.id.startsWith(args[0]!));
+            if (!match) {
+              console.log(pc.red(`sessao nao encontrada: ${args[0]}`));
+            } else {
+              history = rt.sessionStore.getRecentTurns(match.id, rt.conf.AGENTIC_HISTORY_TURNS);
+              currentSessionId = match.id;
+              console.log(pc.green(`carregadas ${history.length} mensagens de ${match.id.slice(0, 8)}`));
+            }
+          }
+        } else if (cmd === 'tools') {
+          for (const t of rt.tools.list()) {
+            console.log(`${pc.cyan(t.name)} [${t.permissions}] — ${t.description}`);
+          }
+        } else if (cmd === 'skills') {
+          for (const s of rt.skills.list()) {
+            console.log(`${pc.cyan(s.name)} [${s.permissions ?? 'low'}] — ${s.description}`);
+          }
+        } else if (cmd === 'save') {
+          console.log(pc.green(`${history.length} mensagens em memoria; sqlite ja persiste turno-a-turno`));
+        } else if (cmd === 'exit' || cmd === 'quit') {
+          break;
+        } else {
+          console.log(pc.red(`comando desconhecido: /${cmd}  (use /help)`));
+        }
+        continue;
+      }
+
+      // chamada do agent com history acumulada
+      let lastSessionId: string | undefined;
+      for await (const ev of a.run({
+        task: line,
+        history,
+        ...(currentModel !== undefined && { model: currentModel }),
+      })) {
+        switch (ev.type) {
+          case 'session-started':
+            lastSessionId = ev.sessionId;
+            console.log(pc.dim(`[session ${ev.sessionId.slice(0, 8)}]`));
+            break;
+          case 'iteration':
+            console.log(pc.dim(`--- iter ${ev.n} ---`));
+            break;
+          case 'assistant':
+            if (ev.message.content) console.log(ev.message.content);
+            break;
+          case 'tool-call':
+            console.log(pc.cyan(`→ ${ev.call.name}(${JSON.stringify(ev.call.input)})`));
+            break;
+          case 'tool-result':
+            console.log(ev.ok ? pc.green('  ok') : pc.red('  err'), String(ev.output).slice(0, 200));
+            break;
+          case 'iteration-error':
+            console.log(pc.red('error:'), ev.error);
+            break;
+          case 'budget-exceeded':
+            console.log(pc.yellow(`budget exceeded: ${ev.reason} after ${ev.iterations} iters`));
+            break;
+          case 'circuit-breaker-tripped':
+            console.log(pc.red('circuit breaker open'));
+            break;
+          case 'aborted':
+            console.log(pc.yellow('aborted'));
+            break;
+          case 'context-reinjected':
+            console.log(
+              pc.dim(
+                `[lembrete] iter ${ev.iteration} tokens=${ev.tokensUsed} (+${ev.reminderTokens})`,
+              ),
+            );
+            break;
+          case 'compaction-triggered':
+            console.log(pc.yellow(`[compactando contexto... tokens=${ev.tokensBefore}]`));
+            break;
+          case 'compaction-completed':
+            console.log(
+              pc.green(
+                `[compactado: ${ev.messagesBefore}->${ev.messagesAfter} msgs, ~${ev.tokensSaved} tokens]`,
+              ),
+            );
+            break;
+          case 'end':
+            console.log(
+              pc.dim(
+                `[end] stopReason=${ev.stopReason} iters=${ev.iterations} tokens=${ev.tokensUsed}`,
+              ),
+            );
+            break;
+          default:
+            break;
+        }
+      }
+
+      // recarrega history completa da sessao recem-rodada para a proxima rodada
+      if (lastSessionId) {
+        currentSessionId = lastSessionId;
+        history = rt.sessionStore.getRecentTurns(lastSessionId, rt.conf.AGENTIC_HISTORY_TURNS);
+      }
+    }
+  } finally {
+    rt.indexer.close();
+    rt.sessionStore.close();
+    rl.close();
+  }
 }
 
 function maskSecrets(env: Record<string, unknown>): Record<string, unknown> {

@@ -144,6 +144,15 @@ export class SessionStore {
     return rows.reverse().map((r) => JSON.parse(r.content) as Message);
   }
 
+  // Lista N sessoes mais recentes de um agentId (default 20).
+  listSessions(agentId: string, limit = 20): SessionRow[] {
+    return this.db
+      .prepare(
+        'SELECT id, agent_id as agentId, source, task, started_at as startedAt, ended_at as endedAt, status FROM sessions WHERE agent_id = ? ORDER BY started_at DESC LIMIT ?',
+      )
+      .all(agentId, limit) as SessionRow[];
+  }
+
   countTurns(sessionId: string): number {
     return (
       this.db.prepare('SELECT COUNT(*) as c FROM turns WHERE session_id = ?').get(sessionId) as {

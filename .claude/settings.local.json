@@ -13,7 +13,14 @@
       "Bash(git -C /home/rluft/fzagent rev-parse --show-toplevel)",
       "Bash(curl -s -o /dev/null -w \"DNS+TLS reachable: HTTP %{http_code} in %{time_total}s\\\\n\" --max-time 8 https://fzrepo.rogerluft.com.br/api/v1/version)",
       "Bash(curl -s -o /dev/null -w \"Via IP: HTTP %{http_code} in %{time_total}s\\\\n\" --max-time 8 --resolve fzrepo.rogerluft.com.br:443:138.186.228.47 https://fzrepo.rogerluft.com.br/api/v1/version)",
-      "Bash(curl -s --max-time 8 https://fzrepo.rogerluft.com.br/api/v1/version)"
+      "Bash(curl -s --max-time 8 https://fzrepo.rogerluft.com.br/api/v1/version)",
+      "Bash(timeout 60 npm run lint)",
+      "Bash(awk -F/ '{print $1}')",
+      "Bash(awk -F/ '{print $2}')",
+      "Bash(grep -E \"\\\\.\\(ts|tsx|js|mjs|cjs\\)$\")",
+      "Bash(grep -cE \"\\\\.\\(ts|tsx|js|mjs|cjs\\)$\")",
+      "Bash(git submodule *)",
+      "Bash(awk '{print $6, $7, $8, $9}')"
     ]
   },
   "outputStyle": "Explanatory"

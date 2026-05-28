@@ -430,10 +430,26 @@ program.action(
     opts: { cli?: boolean; continue?: boolean; new?: boolean; model?: string },
   ) => {
     if (opts.cli) {
-      await runInteractive({
-        ...(opts.continue && { continueLast: true }),
-        ...(opts.model !== undefined && { model: opts.model }),
-      });
+      // Por padrao, --cli abre o TUI fullscreen (Ink) do pacote @fzagent/tui.
+      // Para forcar o REPL readline legacy, defina FZAGENT_LEGACY_CLI=1.
+      if (process.env['FZAGENT_LEGACY_CLI'] === '1') {
+        await runInteractive({
+          ...(opts.continue && { continueLast: true }),
+          ...(opts.model !== undefined && { model: opts.model }),
+        });
+        return;
+      }
+      const { startTuiRepl } = await import('@fzagent/tui');
+      const rt = await buildRuntime({ silent: true });
+      try {
+        await startTuiRepl(rt, () => buildAgent(rt), {
+          ...(opts.continue && { continueLast: true }),
+          ...(opts.model !== undefined && { model: opts.model }),
+        });
+      } finally {
+        rt.indexer.close();
+        rt.sessionStore.close();
+      }
       return;
     }
     if (prompt) {
@@ -572,9 +588,7 @@ async function runInteractive(
       history = rt.sessionStore.getRecentTurns(recent[0]!.id, rt.conf.AGENTIC_HISTORY_TURNS);
       currentSessionId = recent[0]!.id;
       console.log(
-        pc.green(
-          `[continue] retomada de ${recent[0]!.id.slice(0, 8)} (${history.length} msgs)`,
-        ),
+        pc.green(`[continue] retomada de ${recent[0]!.id.slice(0, 8)} (${history.length} msgs)`),
       );
     } else {
       console.log(pc.dim('[continue] nenhuma sessao anterior; comecando do zero'));
@@ -595,7 +609,9 @@ async function runInteractive(
           console.log(pc.dim('/model <id>          troca modelo das proximas rodadas'));
           console.log(pc.dim('/clear  /reset       zera history em memoria'));
           console.log(pc.dim('/sessions [N]        lista N sessoes mais recentes (default 10)'));
-          console.log(pc.dim('/load <sessionId>    carrega history de uma sessao antiga (prefix OK)'));
+          console.log(
+            pc.dim('/load <sessionId>    carrega history de uma sessao antiga (prefix OK)'),
+          );
           console.log(pc.dim('/tools               lista tools registradas'));
           console.log(pc.dim('/skills              lista skills registradas'));
           console.log(pc.dim('/save                imprime quantas msgs estao persistidas'));
@@ -605,8 +621,10 @@ async function runInteractive(
             console.log(pc.dim(`atual: ${currentModel ?? rt.conf.DEFAULT_MODEL}`));
             console.log(pc.dim(`MODELS_ANTHROPIC: ${rt.conf.MODELS_ANTHROPIC}`));
             console.log(pc.dim(`MODELS_OLLAMA:    ${rt.conf.MODELS_OLLAMA}`));
-            if (rt.conf.MODELS_GOOGLE) console.log(pc.dim(`MODELS_GOOGLE:    ${rt.conf.MODELS_GOOGLE}`));
-            if (rt.conf.MODELS_OPENAI) console.log(pc.dim(`MODELS_OPENAI:    ${rt.conf.MODELS_OPENAI}`));
+            if (rt.conf.MODELS_GOOGLE)
+              console.log(pc.dim(`MODELS_GOOGLE:    ${rt.conf.MODELS_GOOGLE}`));
+            if (rt.conf.MODELS_OPENAI)
+              console.log(pc.dim(`MODELS_OPENAI:    ${rt.conf.MODELS_OPENAI}`));
           } else {
             currentModel = args[0];
             console.log(pc.green(`modelo trocado: ${args[0]}`));
@@ -640,7 +658,9 @@ async function runInteractive(
             } else {
               history = rt.sessionStore.getRecentTurns(match.id, rt.conf.AGENTIC_HISTORY_TURNS);
               currentSessionId = match.id;
-              console.log(pc.green(`carregadas ${history.length} mensagens de ${match.id.slice(0, 8)}`));
+              console.log(
+                pc.green(`carregadas ${history.length} mensagens de ${match.id.slice(0, 8)}`),
+              );
             }
           }
         } else if (cmd === 'tools') {
@@ -652,7 +672,9 @@ async function runInteractive(
             console.log(`${pc.cyan(s.name)} [${s.permissions ?? 'low'}] — ${s.description}`);
           }
         } else if (cmd === 'save') {
-          console.log(pc.green(`${history.length} mensagens em memoria; sqlite ja persiste turno-a-turno`));
+          console.log(
+            pc.green(`${history.length} mensagens em memoria; sqlite ja persiste turno-a-turno`),
+          );
         } else if (cmd === 'exit' || cmd === 'quit') {
           break;
         } else {
@@ -683,7 +705,10 @@ async function runInteractive(
             console.log(pc.cyan(`→ ${ev.call.name}(${JSON.stringify(ev.call.input)})`));
             break;
           case 'tool-result':
-            console.log(ev.ok ? pc.green('  ok') : pc.red('  err'), String(ev.output).slice(0, 200));
+            console.log(
+              ev.ok ? pc.green('  ok') : pc.red('  err'),
+              String(ev.output).slice(0, 200),
+            );
             break;
           case 'iteration-error':
             console.log(pc.red('error:'), ev.error);

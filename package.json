@@ -12,7 +12,7 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build -w @fzagent/core && npm run build -w @fzagent/providers && npm run build -w @fzagent/memory && npm run build -w @fzagent/skills && npm run build -w @fzagent/agent && npm run build -w @fzagent/tui && npm run build -w @fzagent/cli && npm run build -w web-ui",
     "dev": "npm run dev --workspaces --if-present",
     "test": "vitest run",
     "test:watch": "vitest",

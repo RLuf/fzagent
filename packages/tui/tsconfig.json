@@ -1,0 +1,14 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "composite": true,
+    "tsBuildInfoFile": "./tsconfig.tsbuildinfo",
+    "jsx": "react",
+    "lib": ["ES2022", "DOM"]
+  },
+  "include": ["src/**/*"],
+  "exclude": ["dist", ".tsup", "**/*.test.ts", "**/*.test.tsx"],
+  "references": [{ "path": "../core" }, { "path": "../agent" }]
+}

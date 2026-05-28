@@ -1,14 +1,11 @@
 {
-  "name": "@fzagent/cli",
+  "name": "@fzagent/tui",
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Binario fzagent: one-shot, --cli interativo, agent loop/budget/skills, wiki ingest/query/lint, vector validate/recreate",
+  "description": "REPL Ink fullscreen do fzagent — consome Agent.run() como generator assincrono com renderizacao rica por tipo de AgentEvent.",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "bin": {
-    "fzagent": "./dist/cli.js"
-  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -28,11 +25,12 @@
   "dependencies": {
     "@fzagent/agent": "*",
     "@fzagent/core": "*",
-    "@fzagent/memory": "*",
-    "@fzagent/providers": "*",
-    "@fzagent/skills": "*",
-    "@fzagent/tui": "*",
-    "commander": "^12.1.0",
-    "picocolors": "^1.1.1"
+    "ink": "^5.0.1",
+    "ink-text-input": "^6.0.0",
+    "picocolors": "^1.1.1",
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12"
   }
 }

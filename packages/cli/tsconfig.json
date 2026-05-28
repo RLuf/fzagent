@@ -13,6 +13,7 @@
     { "path": "../providers" },
     { "path": "../memory" },
     { "path": "../skills" },
-    { "path": "../agent" }
+    { "path": "../agent" },
+    { "path": "../tui" }
   ]
 }

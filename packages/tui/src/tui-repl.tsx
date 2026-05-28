@@ -219,7 +219,7 @@ export const TuiRepl: React.FC<TuiReplProps> = ({
           pushFeed({
             kind: 'tool-call',
             tool: ev.call.name,
-            argsPreview: previewJson(ev.call.arguments),
+            argsPreview: previewJson(ev.call.input),
           });
         } else if (ev.type === 'tool-result') {
           pushFeed({
@@ -379,17 +379,8 @@ export const TuiRepl: React.FC<TuiReplProps> = ({
 };
 
 function contentToString(content: Message['content']): string {
+  // No schema atual content eh sempre string. Guard defensivo p/ shapes futuros.
   if (typeof content === 'string') return content;
-  // Message.content pode ser array de blocos — concatena texto.
-  if (Array.isArray(content)) {
-    return content
-      .map((b: unknown) => {
-        if (typeof b === 'string') return b;
-        if (b && typeof b === 'object' && 'text' in b) return String((b as { text: unknown }).text);
-        return JSON.stringify(b);
-      })
-      .join('');
-  }
   return JSON.stringify(content);
 }
 

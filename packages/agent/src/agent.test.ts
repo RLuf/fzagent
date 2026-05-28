@@ -287,4 +287,68 @@ describe('Agent.run', () => {
     const trip = events.find((e) => e.type === 'circuit-breaker-tripped');
     expect(trip).toBeDefined();
   });
+
+  it('dispara compactacao de contexto quando ultrapassa o threshold de tokens', async () => {
+    const provider = new MockProvider('anthropic', ['mock'], {
+      fn: () => {
+        return {
+          content: 'Resumo da conversa anterior',
+          toolCalls: [],
+          stopReason: 'end_turn' as const,
+          usage: { inputTokens: 5, outputTokens: 5 },
+          model: 'mock',
+          provider: 'anthropic' as const,
+        };
+      },
+    });
+
+    const router = new ProviderRouter({
+      providers: [provider],
+      fallbackOrder: [provider.name],
+      logger: silent,
+      maxAttemptsPerProvider: 1,
+    });
+
+    const agent = new Agent({
+      agentId: 'tester',
+      router,
+      tools: new ToolRegistry().register(echoTool),
+      sessionStore: store,
+      config: {
+        maxIterations: 5,
+        tokenBudget: 100, // Very low token budget to trigger compaction
+        compactionThresholdPct: 50, // 50% threshold = 50 tokens
+        compactionKeepRecent: 1,
+        circuitBreakerMaxFailures: 5,
+        circuitBreakerCooldownMs: 1000,
+        defaultModel: 'mock',
+      },
+      logger: silent,
+      contextLayers: { identity: { name: 'a', description: 'b' } },
+    });
+
+    // We pass a long history to exceed the token budget threshold: 300 chars is ~75 tokens > 50 tokens threshold.
+    const longHistory = [
+      {
+        role: 'user' as const,
+        content:
+          'This is a long user message that has many characters and exceeds the threshold of fifty tokens easily when counted by character count division by four.',
+        timestamp: Date.now(),
+      },
+      {
+        role: 'assistant' as const,
+        content:
+          'Another long assistant response that also has many characters to make sure we hit the compaction limit and trigger summarization.',
+        timestamp: Date.now(),
+      },
+    ];
+
+    const events = await collect(agent.run({ task: 'Say something short', history: longHistory }));
+
+    const trigger = events.find((e) => e.type === 'compaction-triggered');
+    const completed = events.find((e) => e.type === 'compaction-completed');
+
+    expect(trigger).toBeDefined();
+    expect(completed).toBeDefined();
+  });
 });

@@ -128,7 +128,7 @@ export class Agent {
     // Necessario porque input.history pode pre-popular messages com user msgs
     // anteriores; tarefa nao eh sempre index 0. Compaction (sub-sessao 2) usa
     // para preservar a tarefa ao comprimir o meio do historico.
-    const _taskMessageIndex = messages.length - 1;
+    let _taskMessageIndex = messages.length - 1;
 
     const systemPrompt = await assembleSystemPrompt({
       ...this.opts.contextLayers,
@@ -200,6 +200,149 @@ export class Agent {
         };
         this.opts.sessionStore.closeSession(session.id, 'aborted');
         return;
+      }
+      // ContextGuard — Compaction check before starting the next iteration
+      const keepRecent = this.opts.config.compactionKeepRecent ?? 4;
+      const compactionThresholdPct = this.opts.config.compactionThresholdPct ?? 80;
+      const thresholdTokens = this.opts.config.tokenBudget * (compactionThresholdPct / 100);
+      const estimatedCurrentTokens = messages.reduce(
+        (sum, msg) => sum + Math.ceil((msg.content?.length ?? 0) / 4),
+        0,
+      );
+
+      // Collect old messages to compress, excluding the task message at _taskMessageIndex
+      const oldMessages: Message[] = [];
+      for (let i = 0; i < messages.length - keepRecent; i++) {
+        if (i !== _taskMessageIndex) {
+          oldMessages.push(messages[i]!);
+        }
+      }
+
+      if (
+        (estimatedCurrentTokens >= thresholdTokens || tokensUsed >= thresholdTokens) &&
+        oldMessages.length >= 2
+      ) {
+        this.opts.logger.info(
+          {
+            estimatedCurrentTokens,
+            tokensUsed,
+            thresholdTokens,
+            messagesCount: messages.length,
+            oldMessagesCount: oldMessages.length,
+          },
+          'Compaction triggered: context limit or token budget threshold reached',
+        );
+
+        this.opts.eventBus?.emit('agent.compaction-triggered', {
+          agentId: this.opts.agentId,
+          sessionId: session.id,
+          tokensBefore: estimatedCurrentTokens,
+        });
+        yield {
+          type: 'compaction-triggered',
+          reason: 'token-threshold',
+          tokensBefore: estimatedCurrentTokens,
+        };
+
+        const oldText = oldMessages
+          .map((m) => {
+            let line = `${m.role.toUpperCase()}: ${m.content}`;
+            if (m.role === 'assistant' && m.tool_calls && m.tool_calls.length > 0) {
+              line += ` [tool calls: ${m.tool_calls.map((tc) => tc.name).join(', ')}]`;
+            }
+            return line;
+          })
+          .join('\n');
+
+        const summaryPrompt = `Your task is to create a detailed summary of the conversation so far, capturing the user's requests, your actions, and any important context needed to continue without losing information.
+
+Your summary should include the following sections:
+1. Primary Request and Intent: What did the user explicitly ask for?
+2. Key Facts and User Preferences: Decisions made, user preferences, or constraints discovered.
+3. User Messages: List critical user feedback and changing intent.
+4. Errors and Corrections: Mistakes made, how they were fixed.
+5. Current Work and Pending Tasks: What was being worked on immediately before this summary, and what tasks remain.
+
+Here is the conversation to summarize:
+${oldText}
+
+Please provide your summary following this structure. Be precise and thorough.`;
+
+        try {
+          const respSummary = await this.opts.router.complete(
+            [{ role: 'user', content: summaryPrompt }],
+            {
+              model: input.model ?? this.opts.config.defaultModel,
+              systemPrompt: 'You are a helpful assistant summarizing a conversation.',
+            },
+          );
+
+          const summaryContent = respSummary.content;
+          const messagesBeforeCount = messages.length;
+
+          // Rebuild messages list in-place
+          const taskMsg = messages[_taskMessageIndex]!;
+          const suffix = messages.slice(messages.length - keepRecent);
+          const compactedUserMsg: Message = {
+            role: 'user',
+            content: `[Previous conversation summary]\n${summaryContent}`,
+            timestamp: Date.now(),
+          };
+          const compactedAsstMsg: Message = {
+            role: 'assistant',
+            content: "I've reviewed the conversation summary. Ready to continue.",
+            timestamp: Date.now(),
+          };
+
+          messages.splice(
+            0,
+            messages.length,
+            compactedUserMsg,
+            compactedAsstMsg,
+            taskMsg,
+            ...suffix,
+          );
+
+          // Update task message index to its new position (index 2)
+          _taskMessageIndex = 2;
+
+          this.opts.sessionStore.recordTurn(session.id, compactedUserMsg);
+          this.opts.sessionStore.recordTurn(session.id, compactedAsstMsg);
+
+          const tokensAfter = messages.reduce(
+            (sum, msg) => sum + Math.ceil((msg.content?.length ?? 0) / 4),
+            0,
+          );
+          const tokensSaved = Math.max(0, estimatedCurrentTokens - tokensAfter);
+
+          this.opts.logger.info(
+            {
+              messagesBefore: messagesBeforeCount,
+              messagesAfter: messages.length,
+              tokensSaved,
+            },
+            'Compaction completed successfully',
+          );
+
+          this.opts.eventBus?.emit('agent.compaction-completed', {
+            agentId: this.opts.agentId,
+            sessionId: session.id,
+            messagesBefore: messagesBeforeCount,
+            messagesAfter: messages.length,
+            tokensSaved,
+          });
+          yield {
+            type: 'compaction-completed',
+            messagesBefore: messagesBeforeCount,
+            messagesAfter: messages.length,
+            tokensSaved,
+          };
+        } catch (err) {
+          this.opts.logger.warn(
+            { error: err instanceof Error ? err.message : String(err) },
+            'compaction failed',
+          );
+        }
       }
 
       iter += 1;
@@ -299,7 +442,13 @@ export class Agent {
 
         const toolCtx: ToolContext = this.makeToolCtx(session.id, messages, input.signal);
         const exec = await this.opts.tools.execute(tc.name, tc.input, toolCtx);
-        const outputStr = stringifyOutput(exec.output);
+        let outputStr = stringifyOutput(exec.output);
+        // Truncate tool result if it is extremely large to avoid context explosion (ContextGuard)
+        if (outputStr.length > 10000) {
+          const originalSize = outputStr.length;
+          outputStr =
+            outputStr.slice(0, 10000) + `\n\n[Truncated - original size: ${originalSize} chars]`;
+        }
         const result: ToolResult = {
           tool_call_id: tc.id,
           content: outputStr,

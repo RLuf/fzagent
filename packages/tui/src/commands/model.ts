@@ -8,12 +8,16 @@ const mod: CommandModule = {
     if (args.length === 0) {
       const lines: string[] = [];
       lines.push(`atual: ${ctx.getModel() ?? ctx.runtime.conf.DEFAULT_MODEL}`);
-      lines.push(`MODELS_ANTHROPIC: ${ctx.runtime.conf.MODELS_ANTHROPIC}`);
-      lines.push(`MODELS_OLLAMA:    ${ctx.runtime.conf.MODELS_OLLAMA}`);
-      if (ctx.runtime.conf.MODELS_GOOGLE)
-        lines.push(`MODELS_GOOGLE:    ${ctx.runtime.conf.MODELS_GOOGLE}`);
-      if (ctx.runtime.conf.MODELS_OPENAI)
-        lines.push(`MODELS_OPENAI:    ${ctx.runtime.conf.MODELS_OPENAI}`);
+      lines.push(`MODELS_ANTHROPIC: ${ctx.runtime.conf.MODELS_ANTHROPIC.join(', ')}`);
+      lines.push(`MODELS_OLLAMA:    ${ctx.runtime.conf.MODELS_OLLAMA.join(', ')}`);
+      const google = ctx.runtime.conf.MODELS_GOOGLE;
+      if (google && google.length > 0) {
+        lines.push(`MODELS_GOOGLE:    ${google.join(', ')}`);
+      }
+      const openai = ctx.runtime.conf.MODELS_OPENAI;
+      if (openai && openai.length > 0) {
+        lines.push(`MODELS_OPENAI:    ${openai.join(', ')}`);
+      }
       return { type: 'text', content: lines.join('\n') };
     }
     ctx.setModel(args[0]);

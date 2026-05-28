@@ -13,13 +13,12 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Box, Text, useApp, useInput, useStdout } from 'ink';
 import TextInput from 'ink-text-input';
 import type { Message } from '@fzagent/core';
-import type { AgentEvent } from '@fzagent/agent';
 
 import { ensureDirs } from './utils/paths.js';
 import { onResize } from './utils/terminal.js';
 import { buildRegistry } from './commands/index.js';
 import type { CommandContext, CommandRegistry } from './commands/types.js';
-import type { TuiRuntime, AgentFactory } from './commands/runtime-shim.js';
+import type { TuiRuntime, AgentFactory, AgentEvent } from './commands/runtime-shim.js';
 
 export interface TuiReplProps {
   runtime: TuiRuntime;
@@ -198,12 +197,12 @@ export const TuiRepl: React.FC<TuiReplProps> = ({
     const agent = agentFactory();
     const controller = new AbortController();
     abortRef.current = controller;
-    const runInput: Parameters<typeof agent.run>[0] = {
+    const runInput: { task: string; history: Message[]; signal: AbortSignal; model?: string } = {
       task: text,
       history,
       signal: controller.signal,
     };
-    if (model !== undefined) (runInput as { model?: string }).model = model;
+    if (model !== undefined) runInput.model = model;
 
     let assistantBuf = '';
     let tokensInRun = 0;

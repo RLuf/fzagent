@@ -118,9 +118,25 @@ export class Agent {
     yield { type: 'session-started', sessionId: session.id };
 
     const messages: Message[] = [...(input.history ?? [])];
+
+    // Clean up and truncate any pre-existing messages in history that are too large (ContextGuard proactive protection)
+    for (const msg of messages) {
+      if (msg.content && msg.content.length > 20000) {
+        const originalSize = msg.content.length;
+        msg.content =
+          msg.content.slice(0, 20000) + `\n\n[Truncated - original size: ${originalSize} chars]`;
+      }
+    }
+
     // mensagem inicial do usuario (a tarefa) se nao estiver no historico.
     if (messages.length === 0 || messages[messages.length - 1]?.role !== 'user') {
-      const userMsg: Message = { role: 'user', content: input.task, timestamp: Date.now() };
+      let taskContent = input.task;
+      if (taskContent.length > 20000) {
+        const originalSize = taskContent.length;
+        taskContent =
+          taskContent.slice(0, 20000) + `\n\n[Truncated - original size: ${originalSize} chars]`;
+      }
+      const userMsg: Message = { role: 'user', content: taskContent, timestamp: Date.now() };
       messages.push(userMsg);
       this.opts.sessionStore.recordTurn(session.id, userMsg);
     }

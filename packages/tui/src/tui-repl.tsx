@@ -148,6 +148,11 @@ export const TuiRepl: React.FC<TuiReplProps> = ({
   // registry de commands
   const registry: CommandRegistry = useMemo(() => buildRegistry(), []);
 
+  // pre-load commands em background para popular os metadados (exclui o desc: 'carregando...')
+  useEffect(() => {
+    registry.list().catch(() => {});
+  }, [registry]);
+
   // popup autocomplete instantaneo (sincrono)
   const popup = useMemo(() => {
     if (!input.startsWith('/')) return [];

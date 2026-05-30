@@ -150,6 +150,7 @@ callback TTY-aware. `shell.exec` eh a unica HIGH atualmente. Bypass:
    `### Added` / `### Changed` / `### Fixed` / `### Removed` / `### Security`.
    Sem entry no changelog, a mudanca esta incompleta — mesmo que
    build + smoke estejam verdes.
+6. **Sempre versionar e documentar** — toda alteracao estrutural, de comportamento ou de API deve ser registrada no `CHANGELOG.md` (sob `[Unreleased]`) e refletida na documentacao relevante (`docs/`, `AGENTS.md`, `packages/*/src/index.ts` e `docs/api-reference/` via `npm run docs:api`).
 
 ## Politicas operacionais (regras do operador)
 

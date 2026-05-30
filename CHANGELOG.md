@@ -16,6 +16,9 @@ Trabalho em curso. Veja a secao [0.1.0](#010---2026-05-19) para o estado atual.
 ### Added
 
 - **TUI REPL Fullscreen** (`packages/tui`): Interface rica de terminal em tela cheia construida em React/Ink, com suporte a auto-complete de comandos slash, tratamento reativo de redimensionamento (`SIGWINCH`), cancelamento via Esc e hooks de sinal para restauracao segura do terminal (alt-screen cleanup).
+- **Autocomplete na TUI** (`packages/tui`): Carregamento assincrono em background dos metadados de comandos slash ao iniciar a TUI, eliminando o estado temporario de `(carregando...)` na listagem do autocomplete.
+- **Viewport e Rolagem na TUI** (`packages/tui`): Tratamento dinamico de altura e largura de linhas para evitar sobreposicao de texto (viewport layout clipping), com suporte a PageUp/PageDown e indicadores visuais de scroll (▲/▼).
+- **Configuracao do Gitea CLI** (`tea`): Instalacao e integracao inicial do utilitario `tea` com o remote origin do fzagent.
 - **ContextGuard Compaction** (`packages/agent`): Mecanismo autonomo de compactacao do historico quando o consumo de tokens atinge o limite (ex: 80% do budget de 200k). Usa o LLM para gerar resumos progressivos que substituem mensagens antigas sem perder a tarefa ancora e os turnos mais recentes.
 - **Truncamento de Limite de Contexto** (`packages/agent`): Truncamento preventivo para mensagens de historico maiores que 20k caracteres e retornos de execucao de tools maiores que 10k caracteres para evitar explosao do contexto.
 - **FCC Fix (Reinjecao de Tarefa)** (`packages/agent`): Reinjeta periodicamente a tarefa original como mensagem do usuario a cada N iteracoes (ex: 5) para manter o foco do LLM e evitar o decaimento de contexto em execucoes longas.
@@ -23,7 +26,7 @@ Trabalho em curso. Veja a secao [0.1.0](#010---2026-05-19) para o estado atual.
 
 ### Changed
 
-- **Politica de homologacao** em `AGENTS.md`: alem do `npm test`, toda mudanca termina com `npm run build` + invocacao real do binario `fzagent` (smoke obrigatorio). Vitest verde com binario quebrado nao conta como done.
+- **Politica de homologacao** em `AGENTS.md`: alem do `npm test`, toda mudanca termina com `npm run build` + invocacao real do binario `fzagent` (smoke obrigatorio). Vitest verde com binario quebrado nao conta como done. Adicionado passo explicito exigindo versionamento e documentacao de toda alteracao no `CHANGELOG.md` e na API Reference.
 - **Posicionamento de Projeto**: Alinhamento de toda a documentacao para focar no `fzagent` como um agente autonomo local independente, com integracao opcional/indecidida com o `fazai-ng`.
 
 ### Removed

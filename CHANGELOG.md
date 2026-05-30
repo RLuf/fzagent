@@ -15,30 +15,28 @@ Trabalho em curso. Veja a secao [0.1.0](#010---2026-05-19) para o estado atual.
 
 ### Added
 
-- **Split de log levels por sink** (`LOG_LEVEL_CONSOLE`, `LOG_LEVEL_FILE`):
-  cada target do dual sink (console + arquivo) pode ter seu proprio
-  level. Quando ausentes, herdam `LOG_LEVEL`. Receita operacional:
-  `LOG_LEVEL_CONSOLE=silent` + `LOG_LEVEL_FILE=debug` deixa o console
-  quieto e o arquivo verboso para forensics.
+- **TUI REPL Fullscreen** (`packages/tui`): Interface rica de terminal em tela cheia construida em React/Ink, com suporte a auto-complete de comandos slash, tratamento reativo de redimensionamento (`SIGWINCH`), cancelamento via Esc e hooks de sinal para restauracao segura do terminal (alt-screen cleanup).
+- **ContextGuard Compaction** (`packages/agent`): Mecanismo autonomo de compactacao do historico quando o consumo de tokens atinge o limite (ex: 80% do budget de 200k). Usa o LLM para gerar resumos progressivos que substituem mensagens antigas sem perder a tarefa ancora e os turnos mais recentes.
+- **Truncamento de Limite de Contexto** (`packages/agent`): Truncamento preventivo para mensagens de historico maiores que 20k caracteres e retornos de execucao de tools maiores que 10k caracteres para evitar explosao do contexto.
+- **FCC Fix (Reinjecao de Tarefa)** (`packages/agent`): Reinjeta periodicamente a tarefa original como mensagem do usuario a cada N iteracoes (ex: 5) para manter o foco do LLM e evitar o decaimento de contexto em execucoes longas.
+- **Split de log levels por sink** (`LOG_LEVEL_CONSOLE`, `LOG_LEVEL_FILE`): cada target do dual sink (console + arquivo) pode ter seu proprio level. Quando ausentes, herdam `LOG_LEVEL`. Receita operacional: `LOG_LEVEL_CONSOLE=silent` + `LOG_LEVEL_FILE=debug` deixa o console quieto e o arquivo verboso para forensics.
 
 ### Changed
 
-- **Politica de homologacao** em `AGENTS.md`: alem do `npm test`, toda
-  mudanca termina com `npm run build` + invocacao real do binario
-  `fzagent` (smoke obrigatorio). Vitest verde com binario quebrado nao
-  conta como done.
+- **Politica de homologacao** em `AGENTS.md`: alem do `npm test`, toda mudanca termina com `npm run build` + invocacao real do binario `fzagent` (smoke obrigatorio). Vitest verde com binario quebrado nao conta como done.
+- **Posicionamento de Projeto**: Alinhamento de toda a documentacao para focar no `fzagent` como um agente autonomo local independente, com integracao opcional/indecidida com o `fazai-ng`.
+
+### Removed
+
+- **Experimento CLI-py** (`packages/cli-py`): Remocao completa do wrapper e daemon em Python, seus ambientes virtuais e testes de integracao, unificando todo o projeto em TypeScript ESM puro.
 
 ### Planejado
 
-- FCC fix sub-sessao 2: compaction LLM com `groupAtomicUnits` preservando
-  pares `tool_use`/`tool_result` (evita HTTP 400 da Anthropic).
-- Skill `fazai-query-kb` com `QDRANT_FAZAI_URL` para ponte L99 ao corpo
-  fazai-ng.
+- FCC fix sub-sessao 2: compaction LLM com `groupAtomicUnits` preservando pares `tool_use`/`tool_result` (evita HTTP 400 da Anthropic).
+- Skill `fazai-query-kb` com `QDRANT_FAZAI_URL` para ponte L99 ao corpo fazai-ng.
 - Meta-skill `skill.create` (autoconstrucao a partir do registry).
-- GeminiProxyProvider via Cloudflare Worker (camada OpenAI-compat sem
-  SDK proprietario no runtime).
-- Shell completion (bash/zsh) para o binario `fzagent` — hoje so `--help`
-  do commander esta disponivel.
+- GeminiProxyProvider via Cloudflare Worker (camada OpenAI-compat sem SDK proprietario no runtime).
+- Shell completion (bash/zsh) para o binario `fzagent` — hoje so `--help` do commander esta disponivel.
 
 ---
 

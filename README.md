@@ -1,14 +1,14 @@
 # fzagent
 
-> Superagente OpenClaw-style em TypeScript/Node.js ESM puro, com cerebro
-> secundario (Wiki SQLite + FTS5 + Qdrant), multi-provider LLM com fallback,
-> skills auto-discovery e budget loop com circuit breaker.
+> Superagente autonomo local estilo OpenClaw em TypeScript/Node.js ESM puro,
+> com cerebro secundario (Wiki SQLite + FTS5 + Qdrant), multi-provider LLM
+> com fallback, skills auto-discovery e budget loop com circuit breaker.
 
 [![Version](https://img.shields.io/badge/version-0.1.0-informational)](./CHANGELOG.md)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![ESM](https://img.shields.io/badge/module-ESM-F7DF1E)](https://nodejs.org/api/esm.html)
-[![Stack](https://img.shields.io/badge/aligned-fazai--ng-6f42c1)](https://fzrepo.rogerluft.com.br/StorageWeb/fazai-ng)
+[![Stack](https://img.shields.io/badge/mode-local--autonomous-green)](https://fzrepo.rogerluft.com.br/rluft/fzagent)
 [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
 ---
@@ -17,9 +17,11 @@
 
 O **fzagent** replica a essencia do framework educacional
 [Build Your Own OpenClaw](https://build-your-own-openclaw.kiyo-n-zane.com/)
-em ~500 linhas de TypeScript estrito, alinhado a stack
-[fazai-ng](https://fzrepo.rogerluft.com.br/StorageWeb/fazai-ng) para integracao
-futura. O cerebro secundario segue o padrao
+em ~500 linhas de TypeScript estrito. Ele opera como um agente autonomo local
+independente, cujas inspiracoes e refinamento vieram da analise de codigo do
+Claude Code CLI (via framework `reversa`). Sua integracao com a stack
+[fazai-ng](https://fzrepo.rogerluft.com.br/StorageWeb/fazai-ng) eh opcional
+e nao esta decidida. O cerebro secundario segue o padrao
 [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)
 de Andrej Karpathy, com indexador SQLite + FTS5 e busca vetorial via Qdrant.
 
@@ -161,6 +163,7 @@ Veja [CHANGELOG.md](./CHANGELOG.md) para o historico granular por release.
 | 3    | `packages/providers` (router + 5 adapters + capab.)  | done   |
 | 4    | `packages/memory` (wiki SQLite + Qdrant)             | done   |
 | 5    | `packages/agent` (loop OODA + FCC fix sub-sessao 1)  | done   |
+| 5+   | `packages/tui` (REPL Ink fullscreen + ContextGuard)  | done   |
 | 6    | `packages/skills` (registry + manifest v1 + auditor) | done   |
 | 7    | `packages/cli` (commander + server + factory)        | done   |
 | 7+   | Server HTTP + WebSocket (Express + Socket.io)        | done   |

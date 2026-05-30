@@ -16,9 +16,10 @@
 cerebro secundario hibrido (SQLite + FTS5 + Qdrant) e multi-provider LLM
 (Anthropic, OpenAI, OpenRouter, Google, Ollama).
 
-Posicionamento: cerebro maduro que sera eventualmente o juizo estrategico
-do fazai-ng (integracao L99). Cada capacidade externa eh exposta como
-**skill** com manifest v1. Detalhes em [`docs/architecture.md`](docs/architecture.md).
+Posicionamento: agente local autonomo. O projeto foi estruturado para
+operar de forma independente, e a integracao com o fazai-ng (como cerebro
+do corpo L99) eh opcional e nao decidida. Cada capacidade externa eh exposta
+como **skill** com manifest v1. Detalhes em [`docs/architecture.md`](docs/architecture.md).
 
 ## Onde achar o que
 
@@ -65,16 +66,17 @@ npm run ci              # typecheck + lint + format:check + test
 npm run docs:api        # regera docs/api-reference/ via TypeDoc
 ```
 
-CLI do agente (apos build):
+CLI do agente (apos build, ou usando o wrapper ~/.local/bin/fzagent):
 
 ```
 fzagent "<prompt>"                    # one-shot
-fzagent --cli                         # interativo
+fzagent --cli                         # interativo (Ink fullscreen TUI)
 fzagent tools list                    # tools nativas
 fzagent skill list                    # skills (builtins + genaisrc)
 fzagent skill describe <name>         # manifest completo
 fzagent vector validate               # checa Qdrant collections
 fzagent config                        # imprime config efetiva
+fzagent server start|stop|status      # gerencia o Central Command daemon
 ```
 
 ## Convencoes

@@ -2,19 +2,19 @@
 
 ## Posicionamento
 
-fzagent eh o **cerebro** que opera capacidades expostas por outros sistemas.
-Foi desenhado para ser o juizo estrategico que eventualmente sera transplantado
-no corpo do fazai-ng (integracao L99).
+fzagent eh um agente local autonomo. O projeto foi estruturado de
+forma independente e a integracao com o fazai-ng (como cerebro do corpo L99)
+eh opcional e nao decidida por enquanto.
 
-Analogia operacional:
+Analogia operacional (se integrado no futuro):
 
 - **fazai-ng** = corpo overpowered (capacidades destrutivas, processos de
   producao, integracoes profundas) com potencial perigo se mal-arbitrado.
 - **fzagent** = cerebro maduro em corpo inofensivo. Pode errar, ser reiniciado,
   ser treinado, sem causar dano fora do proprio workspace.
 
-Cada capacidade do corpo eh exposta como **skill** com `targetDomain='bridge'`,
-e o cerebro consome via `skill.invoke`. Manifest v1 eh o protocolo estavel.
+Cada capacidade externa eh exposta como **skill** com `targetDomain='bridge'`,
+e o agente consome via `skill.invoke`. Manifest v1 eh o protocolo estavel.
 
 ## Monorepo (6 pacotes)
 

@@ -49,6 +49,35 @@ function previewJson(value: unknown, maxLen = 80): string {
   }
 }
 
+function estimateLines(text: string, width: number): number {
+  const lines = text.split('\n');
+  let count = 0;
+  for (const line of lines) {
+    count += Math.max(1, Math.ceil(line.length / width));
+  }
+  return count;
+}
+
+function getFeedItemHeight(item: FeedItem, width: number): number {
+  const contentWidth = width - 4; // account for padding/margins
+  if (item.kind === 'user' || item.kind === 'assistant') {
+    return estimateLines(item.content, contentWidth);
+  }
+  if (item.kind === 'thinking') {
+    return 1;
+  }
+  if (item.kind === 'tool-call') {
+    const text = `🔧 ${item.tool} ${item.argsPreview}`;
+    return estimateLines(text, contentWidth);
+  }
+  if (item.kind === 'tool-result') {
+    const tag = item.ok ? '✓' : '✗';
+    const text = `${tag} ${item.tool} (${item.durationMs}ms)  ${item.outputPreview}`;
+    return estimateLines(text, contentWidth);
+  }
+  return estimateLines((item as { content: string }).content || '', contentWidth);
+}
+
 export const TuiRepl: React.FC<TuiReplProps> = ({
   runtime,
   agentFactory,
@@ -81,6 +110,13 @@ export const TuiRepl: React.FC<TuiReplProps> = ({
   const [model, setModel] = useState<string | undefined>(initialModel);
   const [sessionId, setSessionId] = useState<string | undefined>(undefined);
   const [history, setHistory] = useState<Message[]>([]);
+
+  const [scrollOffset, setScrollOffset] = useState(0);
+
+  // Reset scroll on new message or when running state changes
+  useEffect(() => {
+    setScrollOffset(0);
+  }, [feed.length, running]);
 
   const abortRef = useRef<AbortController | null>(null);
 
@@ -119,7 +155,7 @@ export const TuiRepl: React.FC<TuiReplProps> = ({
     return registry.matchPrefix(prefix).slice(0, 6);
   }, [input, registry]);
 
-  // Esc cancela run em andamento; senao limpa input
+  // Esc cancela run em andamento; senao limpa input. PageUp/PageDown rolam.
   useInput((_ch, key) => {
     if (key.escape) {
       if (running && abortRef.current) {
@@ -127,6 +163,12 @@ export const TuiRepl: React.FC<TuiReplProps> = ({
       } else {
         setInput('');
       }
+    }
+    if (key.pageUp) {
+      setScrollOffset((prev) => Math.min(prev + 5, feed.length - 1));
+    }
+    if (key.pageDown) {
+      setScrollOffset((prev) => Math.max(0, prev - 5));
     }
   });
 
@@ -276,9 +318,48 @@ export const TuiRepl: React.FC<TuiReplProps> = ({
   }
 
   // ───────── render ─────────
-  const reservedBottom = 4 + Math.min(popup.length, 6);
-  const visibleN = Math.max(4, rows - 5 - reservedBottom);
-  const visible = feed.slice(-visibleN);
+  const reservedHeight = 8 + (popup.length > 0 ? Math.min(popup.length, 6) + 2 : 0);
+  const availableHeight = rows - reservedHeight;
+
+  const feedItemsWithHeights = useMemo(() => {
+    return feed.map((item) => ({
+      item,
+      height: getFeedItemHeight(item, cols),
+    }));
+  }, [feed, cols]);
+
+  const maxScroll = Math.max(0, feed.length - 1);
+  const currentScrollOffset = Math.min(scrollOffset, maxScroll);
+  const startIndex = feed.length - 1 - currentScrollOffset;
+
+  const streamBufHeight = running && streamBuf.length > 0 ? estimateLines(streamBuf, cols - 4) : 0;
+
+  const visibleItems: FeedItem[] = [];
+  let usedHeight = 0;
+  let hasMoreAbove = false;
+  const hasMoreBelow = currentScrollOffset > 0;
+
+  let feedAvailableHeight = Math.max(2, availableHeight - streamBufHeight);
+  if (hasMoreBelow) feedAvailableHeight -= 1; // reserva 1 linha para o indicador ▼
+
+  for (let i = startIndex; i >= 0; i--) {
+    const entry = feedItemsWithHeights[i];
+    if (!entry) break;
+
+    const potentialHasMoreAbove = i > 0;
+    const requiredHeight = entry.height + (potentialHasMoreAbove ? 1 : 0);
+
+    if (usedHeight + requiredHeight > feedAvailableHeight) {
+      if (visibleItems.length === 0) {
+        visibleItems.push(entry.item);
+      }
+      hasMoreAbove = true;
+      break;
+    }
+
+    visibleItems.unshift(entry.item);
+    usedHeight += entry.height;
+  }
 
   return h(
     Box,
@@ -308,7 +389,19 @@ export const TuiRepl: React.FC<TuiReplProps> = ({
     h(
       Box,
       { flexDirection: 'column', flexGrow: 1, paddingX: 1, paddingY: 0, overflow: 'hidden' },
-      ...visible.map((item, i) => renderItem(item, i)),
+      hasMoreAbove &&
+        h(
+          Text,
+          { key: 'more-above', color: 'yellow', dimColor: true },
+          '▲ [PageUp] Mais historico acima',
+        ),
+      ...visibleItems.map((item, i) => renderItem(item, i)),
+      hasMoreBelow &&
+        h(
+          Text,
+          { key: 'more-below', color: 'yellow', dimColor: true },
+          '▼ [PageDown] Mais mensagens abaixo',
+        ),
       running &&
         streamBuf.length > 0 &&
         h(

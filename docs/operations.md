@@ -96,7 +96,7 @@ Binario: `packages/cli/dist/cli.js` (apos build) ou `npm run dev`.
 
 ```
 fzagent "<prompt>"                # one-shot, dispatch p/ agent loop
-fzagent --cli                     # loop interativo readline
+fzagent --tui                     # loop interativo readline
 fzagent --version
 ```
 

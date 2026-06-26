@@ -168,4 +168,3 @@ skill_invoke generate_requirements --unit=core-agent
 4. **Iterar com reviewer**: Validar consistência cruzada
 5. **Expandir para outras units**: tools-runtime, wiki-brain, etc.
 
-Este prompt serve como guia de implementação da metodologia reversa do claude-code-cli adaptada para a estrutura e necessidades específicas do fzagent.

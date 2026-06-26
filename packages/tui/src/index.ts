@@ -1,7 +1,7 @@
 // packages/tui/src/index.ts — API publica do @fzagent/tui.
 //
 // Entry point: `startTuiRepl(runtime, agentFactory, opts)`. CLI invoca quando
-// --cli eh passado. NAO toca em autenticacao/OAuth — apenas consome runtime.
+// --tui eh passado. NAO toca em autenticacao/OAuth — apenas consome runtime.
 
 import React from 'react';
 import { render } from 'ink';

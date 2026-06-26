@@ -2,7 +2,7 @@
 //
 // Uso:
 //   fzagent "<prompt>"                    one-shot (auto-detect)
-//   fzagent --cli                         loop interativo
+//   fzagent --tui                         loop interativo
 //   fzagent agent loop "<task>"           loop agentico explicito
 //   fzagent agent budget "<task>" -i 30 --token-budget 200000
 //   fzagent agent skills | use <id>
@@ -37,7 +37,7 @@ program
   .name('fzagent')
   .description('Superagente OpenClaw-style com cerebro secundario.')
   .version(pkg.version, '-v, --version')
-  .option('--cli', 'modo CLI interativo (REPL)')
+  .option('--tui', 'modo TUI interativo (REPL)')
   .option('-c, --continue', 'continua a ultima sessao (default em REPL; explicito em one-shot)')
   .option('--new', 'forca sessao nova (descarta history acumulada)')
   .option('-m, --model <model>', 'modelo LLM para esta rodada')
@@ -423,14 +423,14 @@ async function handleServiceCommand(cmd: string) {
   }
 }
 
-// fallback: prompt one-shot ou --cli
+// fallback: prompt one-shot ou --tui
 program.action(
   async (
     prompt: string | undefined,
-    opts: { cli?: boolean; continue?: boolean; new?: boolean; model?: string },
+    opts: { tui?: boolean; continue?: boolean; new?: boolean; model?: string },
   ) => {
-    if (opts.cli) {
-      // Por padrao, --cli abre o TUI fullscreen (Ink) do pacote @fzagent/tui.
+    if (opts.tui) {
+      // Por padrao, --tui abre o TUI fullscreen (Ink) do pacote @fzagent/tui.
       // Para forcar o REPL readline legacy, defina FZAGENT_LEGACY_CLI=1.
       if (process.env['FZAGENT_LEGACY_CLI'] === '1') {
         await runInteractive({

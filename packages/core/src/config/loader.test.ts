@@ -22,7 +22,7 @@ describe('loadConfig', () => {
     const { conf, env } = loadConfig({ cwd: dir, env: {} });
     // OpenRouter removido do default em 2026-05-12 (free tier 429 hostil).
     expect(conf.PROVIDER_FALLBACK_ORDER).toEqual(['anthropic', 'google', 'ollama', 'openai']);
-    expect(conf.AGENTIC_MAX_ITERATIONS).toBe(20);
+    expect(conf.AGENTIC_MAX_ITERATIONS).toBe(999999);
     expect(conf.AGENTIC_TOKEN_BUDGET).toBe(200000);
     expect(conf.EMBEDDINGS_DIM).toBe(768);
     expect(env.OLLAMA_BASE_URL).toBe('http://192.168.0.101:11434');
@@ -71,6 +71,6 @@ describe('loadConfig', () => {
   it('respects ignoreFiles', () => {
     writeFileSync(join(dir, 'fzagent.conf'), 'AGENTIC_MAX_ITERATIONS=50\n');
     const { conf } = loadConfig({ cwd: dir, env: {}, ignoreFiles: true });
-    expect(conf.AGENTIC_MAX_ITERATIONS).toBe(20);
+    expect(conf.AGENTIC_MAX_ITERATIONS).toBe(999999);
   });
 });

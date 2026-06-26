@@ -57,7 +57,8 @@ const WikiQueryInput = z.object({
 
 export const wikiQuery = defineTool({
   name: 'wiki.query',
-  description: 'Busca hibrida (FTS5 + Qdrant) no cerebro secundario; opcional sintese via LLM.',
+  description:
+    'Busca hibrida (SQLite FTS5 + Qdrant) no cerebro secundario; opcional sintese via LLM. Use para ler a base sqlite de memoria.',
   inputSchema: WikiQueryInput,
   permissions: 'low',
   async run(ctx, input) {

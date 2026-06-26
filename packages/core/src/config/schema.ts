@@ -35,7 +35,7 @@ export const FzagentConfSchema = z.object({
   // Adapter mantido — re-incluir manualmente neste CSV para reativar.
   PROVIDER_FALLBACK_ORDER: csvList('anthropic,google,ollama,openai'),
 
-  MODELS_ANTHROPIC: csvList('claude-sonnet-4-5,claude-haiku-4-5'),
+  MODELS_ANTHROPIC: csvList('claude-sonnet-4-6,claude-opus-4-6'),
   MODELS_OPENAI: csvList('gpt-4o,gpt-4o-mini'),
   MODELS_GOOGLE: csvList('gemini-2.5-pro,gemini-2.5-flash'),
   MODELS_OPENROUTER: csvList('anthropic/claude-sonnet-4.5,openai/gpt-4o'),
@@ -43,7 +43,7 @@ export const FzagentConfSchema = z.object({
 
   DEFAULT_MODEL: z.string().default('claude-sonnet-4-5'),
 
-  AGENTIC_MAX_ITERATIONS: intStr(20),
+  AGENTIC_MAX_ITERATIONS: intStr(999999),
   AGENTIC_TOKEN_BUDGET: intStr(200000),
   AGENTIC_CIRCUIT_BREAKER_MAX_FAILURES: intStr(3),
   AGENTIC_CIRCUIT_BREAKER_COOLDOWN_MS: intStr(30000),

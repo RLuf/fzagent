@@ -26,6 +26,9 @@ Trabalho em curso. Veja a secao [0.1.0](#010---2026-05-19) para o estado atual.
 
 ### Changed
 
+- **Contexto de Memória do Agente**: Alterado o system prompt (`DEFAULT_IDENTITY` no `factory.ts`) para instruir o agente a utilizar as ferramentas `wiki.query` e `memory.record` em vez do acesso direto ao banco de dados usando `shell.exec` com `sqlite3`, mantendo a filosofia de ferramentas encapsuladas e corrigindo a instrução anterior.
+- **Budget Agentic Elevado**: `AGENTIC_TOKEN_BUDGET` no `fzagent.conf` (e exemplo) elevado de 200k para 1.000.000 para acomodar tarefas livres de leitura de contexto massivo.
+- **CLI Context Debug**: Comando antigo `agent context` removido e substituído pela flag global `--dump-context`, que exibe todo o System Prompt injetado junto da contagem de tokens, facilitando troubleshooting de integração OAuth.
 - **Parametro CLI para TUI**: Ajustado o parametro global `--cli` para `--tui` no Commander para evitar conflitos de contexto entre CLI e TUI. Atualizada toda a documentacao correspondente (`AGENTS.md`, `README.md`, `HOW_TO_USE.md`, `docs/operations.md` e comentarios do pacote `tui`).
 - **Politica de homologacao** em `AGENTS.md`: alem do `npm test`, toda mudanca termina com `npm run build` + invocacao real do binario `fzagent` (smoke obrigatorio). Vitest verde com binario quebrado nao conta como done. Adicionado passo explicito exigindo versionamento e documentacao de toda alteracao no `CHANGELOG.md` e na API Reference.
 - **Posicionamento de Projeto**: Alinhamento de toda a documentacao para focar no `fzagent` como um agente autonomo local independente, com integracao opcional/indecidida com o `fazai-ng`.

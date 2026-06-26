@@ -75,6 +75,7 @@ CLI do agente (apos build, ou usando o wrapper ~/.local/bin/fzagent):
 ```
 fzagent "<prompt>"                    # one-shot
 fzagent --tui                         # interativo (Ink fullscreen TUI)
+fzagent --dump-context "<prompt>"     # exibe system prompt e tokens (debug)
 fzagent tools list                    # tools nativas
 fzagent skill list                    # skills (builtins + genaisrc)
 fzagent skill describe <name>         # manifest completo
@@ -193,5 +194,3 @@ mesmo em DEBUG.
 
 - TypeDoc docs: https://typedoc.org
 - AGENTS.md spec: https://agents.md
-- Mintlify (avaliado e rejeitado para este repo — ver `docs/README.md`
-  secao "Por que TypeDoc e nao Mintlify")

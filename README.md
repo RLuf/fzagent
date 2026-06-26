@@ -118,6 +118,9 @@ fzagent "Resuma o paper em raw/attention.pdf em 3 pontos"
 # TUI interativa
 fzagent --tui
 
+# Debug de System Prompt e Contexto
+fzagent --dump-context "<prompt>"
+
 # loop agentico explicito
 fzagent agent loop "Pesquisa sobre RAG hibrido e gera dossie em wiki/concepts/"
 

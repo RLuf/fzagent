@@ -35,9 +35,8 @@ DEFAULT_MODEL=claude-sonnet-4-5
 AGENTIC_MAX_ITERATIONS=20
 
 # Orcamento de tokens total por tarefa (input + output somados).
-# Subido para 200k apos observacao: tarefas reais com error-recovery (encoding,
-# python2-vs-3, qdrant offline) consomem ~150k. 100k esgotava em 15 iters.
-AGENTIC_TOKEN_BUDGET=200000
+# Subido para 1.000.000 apos observacao: tarefas livres leem muito contexto SQLite.
+AGENTIC_TOKEN_BUDGET=1000000
 
 # Circuit breaker: numero de falhas consecutivas que pausam o agente.
 AGENTIC_CIRCUIT_BREAKER_MAX_FAILURES=3

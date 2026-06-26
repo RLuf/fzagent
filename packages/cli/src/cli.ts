@@ -41,6 +41,7 @@ program
   .option('-c, --continue', 'continua a ultima sessao (default em REPL; explicito em one-shot)')
   .option('--new', 'forca sessao nova (descarta history acumulada)')
   .option('-m, --model <model>', 'modelo LLM para esta rodada')
+  .option('--dump-context', 'Imprime o system prompt com as tools e estimativa de tokens, e sai')
   .option('--dry-run', 'nao executa tools com side-effects (impl gradual)')
   .argument('[prompt]', 'one-shot prompt');
 
@@ -427,8 +428,38 @@ async function handleServiceCommand(cmd: string) {
 program.action(
   async (
     prompt: string | undefined,
-    opts: { tui?: boolean; continue?: boolean; new?: boolean; model?: string },
+    opts: {
+      tui?: boolean;
+      continue?: boolean;
+      new?: boolean;
+      model?: string;
+      dumpContext?: boolean;
+    },
   ) => {
+    if (opts.dumpContext) {
+      const { assembleSystemPrompt } = await import('@fzagent/agent');
+      const { buildRuntime, DEFAULT_IDENTITY } = await import('./factory.js');
+      const rt = await buildRuntime({ silent: true });
+      try {
+        const p = await assembleSystemPrompt({
+          agentId: 'fzagent',
+          sessionId: 'simulacao',
+          task: prompt || 'teste',
+          tools: rt.tools,
+          identity: { name: 'fzagent', description: DEFAULT_IDENTITY },
+          logger: rt.logger,
+        });
+        const tokens = Math.ceil(p.length / 4);
+        console.log(pc.bold(pc.cyan('=== SYSTEM PROMPT ===\n')));
+        console.log(p);
+        console.log(pc.bold(pc.cyan('\n=====================')));
+        console.log(pc.yellow(`Tamanho estimado do system prompt: ~${tokens} tokens`));
+      } finally {
+        rt.indexer.close();
+        rt.sessionStore.close();
+      }
+      return;
+    }
     if (opts.tui) {
       // Por padrao, --tui abre o TUI fullscreen (Ink) do pacote @fzagent/tui.
       // Para forcar o REPL readline legacy, defina FZAGENT_LEGACY_CLI=1.

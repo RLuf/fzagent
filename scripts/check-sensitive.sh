@@ -2,10 +2,10 @@
 # Script para evitar commits acidentais de dados sensíveis ou logs locais.
 
 # Nomes e extensoes proibidos
-FORBIDDEN_FILES="(\.env.*|\.log|.*\.sqlite.*|MEMORY\.md|fzagentcriacao\.txt|humanidade_2_0_analysis\.json)$"
+FORBIDDEN_FILES="(\.env.*|\.log|.*\.sqlite.*|MEMORY\.md|fzagentcriacao\.txt|humanidade_2_0_analysis\.json|.*\.jsonl|^logs/.*|^db/.*)$"
 
-# Verifica arquivos em stage
-staged_files=$(git diff --cached --name-only)
+# Verifica arquivos em stage (Added, Copied, Modified) - ignora Deletados
+staged_files=$(git diff --cached --name-only --diff-filter=ACM)
 
 if [[ -z "$staged_files" ]]; then
   exit 0

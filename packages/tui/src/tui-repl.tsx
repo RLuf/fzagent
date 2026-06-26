@@ -120,29 +120,65 @@ export const TuiRepl: React.FC<TuiReplProps> = ({
 
   const abortRef = useRef<AbortController | null>(null);
 
-  // pre-load ultima sessao se -c
+  // injeta histórico das últimas 5 sessões e resumo da última
   useEffect(() => {
-    if (!continueLast) return;
-    const list = runtime.sessionStore.listSessions('fzagent', 1);
-    if (list.length === 0) {
-      setFeed((f) => [...f, { kind: 'meta', content: '[continue] nenhuma sessao anterior.' }]);
-      return;
+    const list = runtime.sessionStore.listSessions('fzagent', 5);
+    let injectionMsg = '';
+
+    if (list.length > 0) {
+      const recentList = list
+        .map((s) => `- ID: ${s.id.slice(0, 8)} | Task: ${s.task || 'Sem titulo'}`)
+        .join('\n');
+      injectionMsg += `Ultimas 5 sessoes:\n${recentList}\n\n`;
+
+      const last = list[0];
+      if (last) {
+        const turns = runtime.sessionStore.getRecentTurns(last.id, 5);
+        if (turns.length > 0) {
+          const summary = turns
+            .map(
+              (t) =>
+                `[${t.role}]: ${typeof t.content === 'string' ? t.content.slice(0, 200) : '...'}`,
+            )
+            .join('\n');
+          injectionMsg += `Resumo da ultima sessao (${last.id.slice(0, 8)}):\n${summary}\n\n`;
+        }
+      }
+    } else {
+      injectionMsg += `Nenhuma sessao anterior encontrada.\n\n`;
     }
-    const last = list[0];
-    if (!last) return;
-    const turns = runtime.sessionStore.getRecentTurns(
-      last.id,
-      runtime.conf.AGENTIC_HISTORY_TURNS,
-    ) as Message[];
-    setHistory(turns);
-    setSessionId(last.id);
-    setFeed((f) => [
-      ...f,
-      {
-        kind: 'meta',
-        content: `[continue] retomada de ${last.id.slice(0, 8)} (${turns.length} msgs)`,
-      },
-    ]);
+
+    injectionMsg += `Dica: voce pode usar a tool 'memory.record' para escrever fatos importantes no arquivo MEMORY.md do projeto e na base de dados (se aplicavel), garantindo contexto de longo prazo sem usar shell.exec.`;
+
+    if (continueLast) {
+      if (list.length === 0) {
+        setFeed((f) => [...f, { kind: 'meta', content: '[continue] nenhuma sessao anterior.' }]);
+        setHistory([{ role: 'system', content: injectionMsg, timestamp: Date.now() }]);
+        return;
+      }
+      const last = list[0];
+      if (!last) return;
+      const turns = runtime.sessionStore.getRecentTurns(
+        last.id,
+        runtime.conf.AGENTIC_HISTORY_TURNS,
+      ) as Message[];
+
+      setHistory([...turns, { role: 'system', content: injectionMsg, timestamp: Date.now() }]);
+      setSessionId(last.id);
+      setFeed((f) => [
+        ...f,
+        {
+          kind: 'meta',
+          content: `[continue] retomada de ${last.id.slice(0, 8)} (${turns.length} msgs)`,
+        },
+      ]);
+    } else {
+      setHistory([{ role: 'system', content: injectionMsg, timestamp: Date.now() }]);
+      setFeed((f) => [
+        ...f,
+        { kind: 'meta', content: '[system] Historico de sessoes recentes injetado.' },
+      ]);
+    }
   }, [continueLast, runtime]);
 
   // registry de commands

@@ -8,6 +8,7 @@ import { shellExec } from './shell.js';
 import { skillInvoke } from './skill.js';
 import { webFetch, webSearch } from './web.js';
 import { wikiIngest, wikiLint, wikiQuery } from './wiki.js';
+import { memoryRecord } from './memory.js';
 
 export {
   agentDelegate,
@@ -20,6 +21,7 @@ export {
   wikiIngest,
   wikiLint,
   wikiQuery,
+  memoryRecord,
 };
 
 // Registra os 10 builtins canonicos no registry passado.
@@ -35,5 +37,6 @@ export function registerBuiltinTools(reg: ToolRegistry): ToolRegistry {
     wikiLint,
     skillInvoke,
     agentDelegate,
+    memoryRecord,
   ]);
 }

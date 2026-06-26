@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "Superagente OpenClaw-style em TypeScript/Node.js ESM com cerebro secundario (SQLite + Qdrant) e multi-provider LLM",
+  "description": "Superagente autônomo local em TypeScript/Node.js ESM com cerebro secundario (SQLite + Qdrant) e multi-provider LLM",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"

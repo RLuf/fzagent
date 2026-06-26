@@ -1,6 +1,6 @@
 # fzagent
 
-> Superagente autonomo local estilo OpenClaw em TypeScript/Node.js ESM puro,
+> Superagente autonomo local em TypeScript/Node.js ESM puro,
 > com cerebro secundario (Wiki SQLite + FTS5 + Qdrant), multi-provider LLM
 > com fallback, skills auto-discovery e budget loop com circuit breaker.
 
@@ -8,17 +8,14 @@
 [![Node.js](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![ESM](https://img.shields.io/badge/module-ESM-F7DF1E)](https://nodejs.org/api/esm.html)
-[![Stack](https://img.shields.io/badge/mode-local--autonomous-green)](https://fzrepo.rogerluft.com.br/rluft/fzagent)
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+[![Stack](https://img.shields.io/badge/mode-local--autonomous-green)](https://github.com/RLuf/fzagent)
+[![License](https://img.shields.io/badge/license-CC_BY_4.0-blue)](LICENSE)
 
 ---
 
 ## Por que existe
 
-O **fzagent** replica a essencia do framework educacional
-[Build Your Own OpenClaw](https://build-your-own-openclaw.kiyo-n-zane.com/)
-em ~500 linhas de TypeScript estrito. Ele opera como um agente autonomo local
-independente, cujas inspiracoes e refinamento vieram da analise de codigo do
+O **fzagent** foi concebido como um agente autonomo local independente, cujas inspiracoes e refinamento vieram da analise de codigo do
 Claude Code CLI (via framework `reversa`). Sua integracao com a stack
 [fazai-ng](https://fzrepo.rogerluft.com.br/StorageWeb/fazai-ng) eh opcional
 e nao esta decidida. O cerebro secundario segue o padrao
@@ -30,14 +27,14 @@ de Andrej Karpathy, com indexador SQLite + FTS5 e busca vetorial via Qdrant.
 - **Multi-provider LLM com fallback**: Anthropic, OpenAI, Google (SDK `@google/generative-ai`), OpenRouter, Ollama. Circuit breaker por provider, retry com backoff exponencial e **capability negotiation** (`supportsTools`) evita degradacao silenciosa.
 - **Cerebro secundario hibrido**: Wiki markdown indexado (`SQLite + FTS5`) + 6 collections vetoriais (`Qdrant`, BGE-base 768d via ONNX local).
 - **Budget loop**: state machine `THINK -> ACT -> OBSERVE -> REFLECT` com `maxIterations` + `tokenBudget` (default 200k) + circuit breaker por provider.
-- **Skills auto-discovery**: scan periodico de `genaisrc/*.genai.mjs` (formato OpenClaw `SKILL.md`); manifest v1 com `permissions`, `requiresConfirmation`, `isDestructive`, `targetDomain`; auditoria JSONL append-only com `sha256(16)`.
+- **Skills auto-discovery**: scan periodico de `genaisrc/*.genai.mjs` (formato padrao `SKILL.md`); manifest v1 com `permissions`, `requiresConfirmation`, `isDestructive`, `targetDomain`; auditoria JSONL append-only com `sha256(16)`.
 - **HIGH gate para tools nativas**: paridade com skills; bypass via `FZAGENT_AUTO_CONFIRM_HIGH=1` ou `AUTO_CONFIRM_HIGH=true` no conf.
 - **FCC fix (mitigacao "lost in the middle")**: task pinning sandwich (topo + fim do system prompt) + reinjecao periodica `[LEMBRETE]` a cada N iteracoes. Mantem coerencia em sessoes longas.
 - **Sanitizacao de tool names**: `shell.exec -> shell_exec` no fio (regex Anthropic/OpenAI), desnormalizado no inbound.
 - **WORA heartbeat opcional**: observa heap, qdrant, disco a cada 30s; raciocinio zero-LLM por heuristica; age (gc, reconnect, alert).
 - **Server HTTP + WebSocket**: Express 5 + Socket.io expoem REST (health, log tail) e namespace `/ws` para stream de eventos do agente.
 - **Web UI experimental** (`packages/web-ui`): Vite 8 + React 19 + Tailwind + Zustand consumindo o `/ws`.
-- **CLI ergonomico**: `fzagent "<prompt>"`, `fzagent --cli` (interativo), `fzagent agent loop "<task>"`, `fzagent wiki ingest`, `fzagent skill list/describe`.
+- **TUI ergonomico**: `fzagent "<prompt>"`, `fzagent --tui` (interativo), `fzagent agent loop "<task>"`, `fzagent wiki ingest`, `fzagent skill list/describe`.
 - **Logging dual sink com split de levels**: console (pino-pretty) + arquivo JSON estruturado (`LOG_FILE`); cada sink com seu proprio level via `LOG_LEVEL_CONSOLE` e `LOG_LEVEL_FILE` (console silent + arquivo debug eh receita comum).
 - **API reference auto-gerada** (`docs/api-reference/`) via TypeDoc + plugin markdown.
 
@@ -66,10 +63,10 @@ fzagent/
 |   |-- providers/    # adapters multi-LLM com fallback router
 |   |-- memory/       # embeddings ONNX, qdrant client, wiki SQLite indexer
 |   |-- skills/       # SkillRegistry com auto-discovery
-|   |-- agent/        # nucleo OpenClaw-style, tools nativas, FCC fix
+|   |-- agent/        # nucleo agentico, tools nativas, FCC fix
 |   |-- cli/          # binario fzagent (commander) + server Express/Socket.io
 |   `-- web-ui/       # frontend Vite + React 19 + Tailwind + Zustand
-|-- genaisrc/         # skills do usuario em formato OpenClaw
+|-- genaisrc/         # skills do usuario em formato padrao
 |-- skills-claude/    # skills para Claude.ai (reversa, fzagent)
 |-- wiki/             # cerebro secundario markdown (versionado)
 |   |-- sources/      # dossies de fontes externas
@@ -118,8 +115,8 @@ npm test
 # one-shot
 fzagent "Resuma o paper em raw/attention.pdf em 3 pontos"
 
-# CLI interativa
-fzagent --cli
+# TUI interativa
+fzagent --tui
 
 # loop agentico explicito
 fzagent agent loop "Pesquisa sobre RAG hibrido e gera dossie em wiki/concepts/"
@@ -189,18 +186,17 @@ Legenda: `done` entregue, `exp` experimental, `wip` em curso, `prep` preparado
 
 ## Filosofia
 
-> Replicar o **espirito** do OpenClaw, nao o codigo.
+> Foco na simplicidade e autonomia.
 > Codigo enxuto > codigo completo. Tipos estritos > comentarios.
 > Hibrido textual + vetorial > vetorial puro.
 > Permissoes proporcionais ao risco > tudo aberto.
 
 ## Licenca
 
-MIT — veja [LICENSE](LICENSE).
+CC BY 4.0 — veja [LICENSE](LICENSE).
 
 ## Referencias
 
-- [Build Your Own OpenClaw](https://build-your-own-openclaw.kiyo-n-zane.com/)
 - [LLM Wiki — Karpathy](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f)
 - [fazai-ng](https://fzrepo.rogerluft.com.br/StorageWeb/fazai-ng)
 - [reversa](https://github.com/sandeco/reversa)

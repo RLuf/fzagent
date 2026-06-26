@@ -1,5 +1,9 @@
 # AGENTS.md
 
+**fzagent** é um superagente autônomo local em TypeScript/Node.js ESM puro, com cérebro secundário (Wiki SQLite + FTS5 + Qdrant), multi-provider LLM com fallback, skills auto-discovery e budget loop com circuit breaker.
+
+Para o histórico detalhado de mudanças, consulte o [CHANGELOG.md](CHANGELOG.md).
+
 > **REGRA ZERO — smoke test OBRIGATORIO depois de cada mudanca.**
 > Vitest verde nao prova nada. Toda mudanca em codigo ou config termina
 > com `npm run build` + invocacao real do binario (`fzagent skill list`,
@@ -12,7 +16,7 @@
 
 ## Sobre o projeto
 
-**fzagent** eh um superagente OpenClaw-style em TypeScript/Node.js ESM com
+**fzagent** eh um superagente autonomo local em TypeScript/Node.js ESM com
 cerebro secundario hibrido (SQLite + FTS5 + Qdrant) e multi-provider LLM
 (Anthropic, OpenAI, OpenRouter, Google, Ollama).
 
@@ -70,7 +74,7 @@ CLI do agente (apos build, ou usando o wrapper ~/.local/bin/fzagent):
 
 ```
 fzagent "<prompt>"                    # one-shot
-fzagent --cli                         # interativo (Ink fullscreen TUI)
+fzagent --tui                         # interativo (Ink fullscreen TUI)
 fzagent tools list                    # tools nativas
 fzagent skill list                    # skills (builtins + genaisrc)
 fzagent skill describe <name>         # manifest completo

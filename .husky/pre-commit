@@ -1,3 +1,6 @@
 #!/usr/bin/env sh
 # fzagent pre-commit: lint-staged em arquivos staged.
 npx lint-staged
+
+# Check for sensitive files
+bash scripts/check-sensitive.sh

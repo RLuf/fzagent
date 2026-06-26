@@ -89,3 +89,8 @@ projeto.txt
 # arquivo morto: em vez de apagar arquivos/pastas, mover para archived/
 # preserva historico local sem poluir o repositorio.
 archived/
+
+# Conversas locais e logs extras
+site/fzagentcriacao.txt
+humanidade_2_0_analysis.json
+MEMORY.md

@@ -26,6 +26,7 @@ Trabalho em curso. Veja a secao [0.1.0](#010---2026-05-19) para o estado atual.
 
 ### Changed
 
+- **Parametro CLI para TUI**: Ajustado o parametro global `--cli` para `--tui` no Commander para evitar conflitos de contexto entre CLI e TUI. Atualizada toda a documentacao correspondente (`AGENTS.md`, `README.md`, `HOW_TO_USE.md`, `docs/operations.md` e comentarios do pacote `tui`).
 - **Politica de homologacao** em `AGENTS.md`: alem do `npm test`, toda mudanca termina com `npm run build` + invocacao real do binario `fzagent` (smoke obrigatorio). Vitest verde com binario quebrado nao conta como done. Adicionado passo explicito exigindo versionamento e documentacao de toda alteracao no `CHANGELOG.md` e na API Reference.
 - **Posicionamento de Projeto**: Alinhamento de toda a documentacao para focar no `fzagent` como um agente autonomo local independente, com integracao opcional/indecidida com o `fazai-ng`.
 
@@ -181,6 +182,6 @@ Estado pre-versionamento; consultar `git log` para historico granular
 
 ---
 
-[Unreleased]: https://fzrepo.rogerluft.com.br/rluft/fzagent/compare/v0.1.0...HEAD
-[0.1.0]: https://fzrepo.rogerluft.com.br/rluft/fzagent/releases/tag/v0.1.0
-[0.0.1]: https://fzrepo.rogerluft.com.br/rluft/fzagent/commit/62fb68d
+[Unreleased]: https://github.com/RLuf/fzagent/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/RLuf/fzagent/releases/tag/v0.1.0
+[0.0.1]: https://github.com/RLuf/fzagent/commit/62fb68d
